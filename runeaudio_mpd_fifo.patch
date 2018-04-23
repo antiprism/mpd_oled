@@ -1,0 +1,10 @@
+--- /srv/http/app/libs/runeaudio.php	2018-04-22 08:55:49.175599927 +0200
++++ runeaudio.php	2018-04-22 08:52:39.337055373 +0200
+@@ -2272,6 +2272,7 @@
+                     runelog('mpd.conf advanced mode RESET STATE');
+                 }
+                 // write mpd.conf file
++                $output .= file_get_contents('/usr/local/etc/mpd_oled_fifo.conf');
+                 $fh = fopen('/etc/mpd.conf', 'w');
+                 fwrite($fh, $output);
+                 fclose($fh);
