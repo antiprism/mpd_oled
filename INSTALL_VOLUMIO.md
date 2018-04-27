@@ -41,8 +41,7 @@ sudo nano /etc/mpd.conf
 ```
 And add the following lines at the end
 ```
-audio_output
-{
+audio_output {
         type "fifo"
         name "spec_fifo"
         path "/tmp/mpd_oled"
