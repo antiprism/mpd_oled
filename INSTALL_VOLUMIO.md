@@ -42,11 +42,11 @@ sudo nano /etc/mpd.conf
 And add the following lines at the end
 ```
 audio_output {
-        type "fifo"
-        name "spec_fifo"
-        path "/tmp/mpd_oled"
-        format "44100:16:2"
-        #buffer_time "500000"
+        type            "fifo"
+        name            "mpd_oled_FIFO"
+        path            "/tmp/mpd_oled_fifo"
+        format          "44100:16:2"
+        #buffer_time     "500000"
 }
 ```
 Restart mpd
