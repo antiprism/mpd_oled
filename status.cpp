@@ -164,10 +164,11 @@ void mpd_info::set_vals(struct mpd_connection *conn)
   if (status == NULL)
     return;
 
-  // Removed because MPD volume may not be Volumio volume
+#ifndef VOLUMIO // Volumio volume is not MPD volume
   volume = mpd_status_get_volume(status);
   if (mpd_status_get_error(status) != NULL)
     return;
+#endif // VOLUMIO
 
   state = mpd_status_get_state(status);
   if (state == MPD_STATE_PLAY || state == MPD_STATE_PAUSE) {

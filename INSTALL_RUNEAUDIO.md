@@ -1,5 +1,11 @@
 # Install instructions for RuneAudio
 
+## Base system
+
+Install [RuneAudio](http://www.runeaudio.com/). Ensure a command line prompt is
+available for entering the commands below (e.g. use SSH, default username
+'root', default password 'rune').
+
 ## Build and install cava
 
 mpd_oled uses Cava, a bar spectrum audio visualizer, to calculate the spectrum
@@ -22,9 +28,15 @@ make install
 Configure your system to enable I2C or SPI, depending on how your OLED
 is connected.
 
-The I2C bus speed on your system may be too slow for a reasonable update
-speed. I use a SSH1106 display and set a higher bus speed by adding the
-following line to /boot/config.txt
+I use a cheap 4 pin I2C SSH1106 display with a Raspberry Pi Zero. It is
+[wired like this](https://www.14core.com/wp-content/uploads/2016/11/Raspberry-Pi-2-OLED_Screen-WIring-Diagram-Monocrome-I2C.jpg). In /boot/config.txt I
+have the line `dtparam=i2c_arm=on`. In /etc/modules-load.d/raspberrypi.conf
+I have the lines `i2c-dev` and `i2c-bcm2708`.
+
+The I2C bus speed on your system may be too slow for a reasonable screen
+refresh. Set a higher bus speed by adding the
+following line to /boot/config.txt (or try a higher value for a higher
+screen refresh, I use 800000 with a 25 FPS screen refresh)
 ```
 dtparam=i2c_arm_baudrate=400000
 ```

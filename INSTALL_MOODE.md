@@ -1,10 +1,10 @@
-# Install instructions for Volumio
+# Install instructions for Moode
 
 ## Base system
 
-Install [Volumio](https://volumio.org/). Ensure a command line prompt is
-available for entering the commands below (e.g.
-[use SSH](https://volumio.github.io/docs/User_Manual/SSH.html).)
+Install [Moode](http://moodeaudio.org/). Ensure a command line prompt is
+available for entering the commands below (e.g. use SSH, default username
+'pi', default password 'moodeaudio')
 
 ## Build and install cava
 
@@ -12,13 +12,10 @@ mpd_oled uses Cava, a bar spectrum audio visualizer, to calculate the spectrum
    
    <https://github.com/karlstav/cava>
 
-The commands to download, build and install Cava are as follows. Note that
-the the command to install packages is different to the one given in the Cava
-instructions. It installs extra packages needed for the build and does not
-install the Pulseaudio development package.
+The commands to download, build and install Cava are as follows.
 ```
 sudo apt-get update
-sudo apt-get install git-core autoconf make libtool libfftw3-dev libasound2-dev
+sudo apt-get install libfftw3-dev libasound2-dev
 git clone https://github.com/karlstav/cava
 cd cava
 ./autogen.sh
@@ -43,31 +40,7 @@ screen refresh, I use 800000 with a 25 FPS screen refresh)
 ```
 dtparam=i2c_arm_baudrate=400000
 ```
-Then restart the Pi.
-
-The MPD audio output needs to be copied to a named pipe, where Cava can
-read it and calculate the spectrum. This should be configured in /etc/mpd.conf,
-but changes to this file will be overwritten by Volumio. Instead, edit the
-mpd.conf template file
-```
-sudo nano /volumio/app/plugins/music_service/mpd/mpd.conf.tmpl
-```
-And add the following lines at the end
-```
-audio_output {
-        type            "fifo"
-        name            "mpd_oled_FIFO"
-        path            "/tmp/mpd_oled_fifo"
-        format          "44100:16:2"
-        #buffer_time     "500000"
-}
-```
-Force Volumio to regenerate mpd.conf and restart MPD by going to
-the Web UI PLAYBACK OPTIONS and clicking on the Audio Outputs save button.
-
-Change buffer_time if you need to synchronise the spectrum display
-and the audio on your system. After any changes, click on the Web UI
-PLAYBACK OPTIONS Audio Outputs save button.
+And then restart the Pi.
 
 If the mpd_oled clock does not display the local time then you may need
 to set the system time zone. The following command will run a console
@@ -80,16 +53,43 @@ sudo dpkg-reconfigure tzdata
 
 Install the packages needed to build the program
 ```
-   sudo apt install build-essential git-core autoconf make libtool libi2c-dev i2c-tools lm-sensors libcurl4-openssl-dev libmpdclient-dev libjsoncpp-dev
+sudo apt install libi2c-dev i2c-tools lm-sensors
 ```
-Clone the source repository
+Clone the source repository and change to the source directory
 ```
 git clone https://github.com/antiprism/mpd_oled
+cd mpd_oled
 ```
-Change to the source directory and build the program
+
+The MPD audio output needs to be copied to a named pipe, where Cava can
+read it and calculate the spectrum. This is configured in /etc/mpd.conf.
+However, Moode regenerates this file, and also disables all but a single MPD
+output, in response to various events, and so the Moode code must be changed.
+The following commands copy the FIFO configuration file to
+/usr/local/etc/mpd_oled_fifo.conf and patch the Moode source code.
+(Note: if, for any reason, regeneration of /etc/mpd.conf
+has been disabled (for example, if it has been set immutable) then edit
+the file directly and append the contents of mpd_oled_fifo.conf.)
+
+```
+cp mpd_oled_fifo.conf /usr/local/etc/
+patch -d/ -p0 -N < moode_mpd_fifo.patch
+```
+Reboot the machine from the Moode UI, then log back in and change to the
+mpd_oled source directory, e.g.
 ```
 cd mpd_oled
-PLAYER=VOLUMIO make
+```
+If you ever want to make any changes to the FIFO configuration,
+for example you might want to change buffer_time to help synchronise
+the spectrum display with the audio on your system,
+then modify /usr/local/etc/mpd_oled_fifo.conf and restart MPD,
+by going to the Moode UI Audio Config page and clicking on
+"RESTART" in the MPD section.
+
+Now build mpd_oled
+```
+PLAYER=MOODE make
 ```
 Check the program works correctly by running it while playing music.
 The OLED type MUST be specified with -o from the following list:
