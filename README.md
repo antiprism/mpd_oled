@@ -1,8 +1,8 @@
-# MPD, Volumio, RuneAudio OLED Spectrum Display for Raspberry Pi
+# MPD, Volumio, RuneAudio and Moode OLED Spectrum Display for Raspberry Pi
 
 The mpd_oled program displays an information screen including a music
 frequency spectrum on an OLED screen connected to a Raspberry Pi (or similar)
-running MPD, this includes Volumio and RuneAudio.
+running MPD, this includes Volumio, RuneAudio and Moode.
 ![OLED with mpd_oled](mpd_oled.jpg)
 
 The code and installation instructions have not been widely tested. The
