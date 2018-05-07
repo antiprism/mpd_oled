@@ -309,7 +309,7 @@ int start_idle_loop(ArduiPi_OLED &display, FILE *fifo_file,
 
     // If there is data read it, otherwise use zero data.
     int num_bars_read = 0;
-    if(select(FD_SETSIZE, &set, NULL, NULL, &timeout))
+    if(select(FD_SETSIZE, &set, NULL, NULL, &timeout) > 0)
       num_bars_read = fread(&disp_info.spect.heights[0], sizeof(unsigned char),
           disp_info.spect.heights.size(), fifo_file);
     else

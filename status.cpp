@@ -60,9 +60,13 @@ int get_connection_info()
     return -1;
   }
 
-  char buf[32];
-  for (int i = 0; i < 30; i++) // Link is in position 30
-    fscanf(fproc, "%s", buf);
+  char buf[128];
+  for (int i = 0; i < 30; i++) { // Link is in position 30
+    if (fscanf(fproc, "%s", buf) == EOF) {
+      strcpy(buf, "0");
+      break;
+    }
+  }
 
   fclose(fproc);
 
