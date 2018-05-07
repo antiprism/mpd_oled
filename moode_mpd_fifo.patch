@@ -1,0 +1,24 @@
+diff -Naru /var/www/command/worker.php www/command/worker.php
+--- /var/www/command/worker.php	2018-04-26 20:06:55.830000000 +0200
++++ www/command/worker.php	2018-04-28 07:42:27.179961953 +0200
+@@ -374,6 +374,7 @@
+ workerLog('worker: Configure MPD outputs');
+ $mpdoutput = configMpdOutputs();
+ sysCmd('mpc enable only ' . $mpdoutput);
++sysCmd('mpc enable mpd_oled_FIFO');
+ // report mpd outputs
+ $sock = openMpdSock('localhost', 6600);
+ sendMpdCmd($sock, 'outputs');
+diff -Naru /var/www/inc/playerlib.php www/inc/playerlib.php
+--- /var/www/inc/playerlib.php	2018-04-28 07:36:06.584499930 +0200
++++ www/inc/playerlib.php	2018-04-28 07:44:16.168825149 +0200
+@@ -1168,6 +1168,9 @@
+ 	$output .= "device \"btstream\"\n";
+ 	$output .= "}\n";
+ 
++        // mpd_oled FIFO
++        $output .= file_get_contents('/usr/local/etc/mpd_oled_fifo.conf');
++
+ 	$fh = fopen('/etc/mpd.conf', 'w');
+ 	fwrite($fh, $output);
+ 	fclose($fh);
