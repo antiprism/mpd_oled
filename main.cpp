@@ -64,10 +64,20 @@ struct ProgOpts
   int gap;
   unsigned char i2c_addr;
   int reset_gpio;
+  int source;
 
   ProgOpts(): prog_name("mpd_oled"), version("0.01"),
               oled(OLED_ADAFRUIT_SPI_128x32), framerate(15), bars(16), gap(1),
-              i2c_addr(0), reset_gpio(25)
+              i2c_addr(0), reset_gpio(25),
+              // Default for source of status values depends on the player
+              source(
+#ifdef VOLUMIO
+                mpd_info::SOURCE_VOLUMIO
+#else
+                mpd_info::SOURCE_MPD
+#endif
+                )
+
               {}
   void usage();
   void parse_args(int argc, char *argv[]);
@@ -266,14 +276,26 @@ void draw_display(ArduiPi_OLED &display, const display_info &disp_info)
     draw_spect_display(display, disp_info);
 }
 
+namespace {
+pthread_mutex_t disp_info_lock;
+}
 
 void *update_info(void *data)
 {
-  display_info *disp_info = (display_info *)data;
   const float delay_secs = 0.3;
+  display_info *disp_info_orig = (display_info *)data;
   while (true) {
-    disp_info->status.init();          // Update MPD status info
-    disp_info->conn_init();            // Update connection info
+    pthread_mutex_lock(&disp_info_lock);
+    display_info disp_info = *disp_info_orig;
+    pthread_mutex_unlock(&disp_info_lock);
+
+    disp_info.status.init();          // Update MPD status info
+    disp_info.conn_init();            // Update connection info
+
+    pthread_mutex_lock(&disp_info_lock);
+    *disp_info_orig = disp_info;
+    pthread_mutex_unlock(&disp_info_lock);
+
     usleep(delay_secs * 1000000);
   }
 };
@@ -289,13 +311,23 @@ int start_idle_loop(ArduiPi_OLED &display, FILE *fifo_file,
   
   display_info disp_info;
   disp_info.spect.init(opts.bars, opts.gap);
+  disp_info.status.set_source(opts.source);
   disp_info.status.init();
  
   // Update MPD info in separate thread to avoid stuttering in the spectrum
   // animation.
   pthread_t update_info_thread;
-  pthread_create(&update_info_thread, NULL, update_info, (void *)(&disp_info));
-  
+  if (pthread_create(&update_info_thread, NULL, update_info,
+        (void *)(&disp_info))) {
+    fprintf(stderr, "error: could not create pthread\n");
+    return 1;
+  }
+
+  if (pthread_mutex_init(&disp_info_lock, NULL) != 0) {
+    fprintf(stderr, "error: could not create pthread mutex\n");
+    return 2;
+  }
+
   while (true) {
     fd_set set;
     FD_ZERO(&set);
@@ -319,13 +351,17 @@ int start_idle_loop(ArduiPi_OLED &display, FILE *fifo_file,
     // Update display if necessary
     if (timer.finished() || num_bars_read) {
        display.clearDisplay();
+       pthread_mutex_lock(&disp_info_lock);
        draw_display(display, disp_info);
+       pthread_mutex_unlock(&disp_info_lock);
        display.display();
     }
 
     if(timer.finished())
       timer.set_timer(update_sec);   // Reset the timer
   }
+
+  return 0;
 }
 
 
@@ -370,14 +406,16 @@ int main(int argc, char **argv)
   // Create a file stream to read cava's raw output from
   FILE *fifo_file = fopen(fifo_name.c_str(), "rb");
   if(fifo_file == NULL) {
-    fprintf(stderr, "could not open cava FIFO for reading");
+    fprintf(stderr, "could not open cava FIFO for reading\n");
     exit(EXIT_FAILURE);
   }
 
-  start_idle_loop(display, fifo_file, opts);
-  //read_and_display_loop(display, fifo_file, type, opts.bars, opts.gaps);
-  
+  int loop_ret = start_idle_loop(display, fifo_file, opts);
+
   // Free PI GPIO ports
   display.close();
+
+  if(loop_ret != 0)
+    exit(EXIT_FAILURE);
 
 }

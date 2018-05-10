@@ -121,9 +121,74 @@ string get_volumio_status()
   int httpCode = 0;
   curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &httpCode);
   curl_easy_cleanup(curl);
-  
+
   return (httpCode == 200) ? httpData : string();
 }
+
+static int get_mpd_kbitrate(struct mpd_connection *conn)
+{
+  mpd_command_list_begin(conn, true);
+  mpd_send_status(conn);
+  mpd_command_list_end(conn);
+
+  int kbitrate = 0;
+  struct mpd_status *status = mpd_recv_status(conn);
+  if (status != NULL) {
+     int stat = mpd_status_get_state(status);
+     if (stat == MPD_STATE_PLAY || stat == MPD_STATE_PAUSE)
+        kbitrate = mpd_status_get_kbit_rate(status);
+     mpd_status_free(status);
+  }
+
+  mpd_response_finish(conn);
+  return kbitrate;
+}
+
+
+void mpd_info::set_vals_volumio(struct mpd_connection *conn)
+{
+  string volumio_status = get_volumio_status();
+  Json::Reader reader;
+  Json::Value obj;
+
+  if (reader.parse(volumio_status, obj)) {
+    volume = obj["volume"].isInt() ? obj["volume"].asInt() : 0;
+
+    string stat = obj["status"].asString();
+    if (stat == "play")
+      state = MPD_STATE_PLAY;
+    else if (stat == "pause")
+      state = MPD_STATE_PAUSE;
+    else if (stat == "stop")
+      state = MPD_STATE_STOP;
+    else
+      state = MPD_STATE_UNKNOWN;
+
+    int seek = obj["seek"].isInt() ? obj["seek"].asInt() : 0;
+    song_elapsed_secs = seek / 1000;
+
+    int duration = obj["duration"].isInt() ? obj["duration"].asInt() : 0;
+    song_total_secs = duration;
+
+    title = obj["title"].asString();
+    origin = obj["artist"].asString();
+  }
+  else {
+    init_vals();
+  }
+
+  kbitrate = get_mpd_kbitrate(conn);
+}
+
+#else
+// Dummy function (shouldn't be called)
+void mpd_info::set_vals_volumio(struct mpd_connection *conn)
+{
+  fprintf(stderr, "Internal error: trying to find Volumio status values but "
+      "the program was not built with PLAYER=VOLUMIO\n");
+  exit(EXIT_FAILURE);
+}
+
 #endif // VOLUMIO
 
 static string get_tag(const struct mpd_song *song, enum mpd_tag_type type)
@@ -160,6 +225,15 @@ void mpd_info::init_vals()
 }
 
 void mpd_info::set_vals(struct mpd_connection *conn)
+{
+  if (source == SOURCE_VOLUMIO)
+    set_vals_volumio(conn);
+  else
+    set_vals_mpd(conn);
+}
+
+
+void mpd_info::set_vals_mpd(struct mpd_connection *conn)
 {
   mpd_command_list_begin(conn, true);
   mpd_send_status(conn);

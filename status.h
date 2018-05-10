@@ -28,6 +28,7 @@
 class mpd_info
 {
 private:
+  int source;
   int volume;
   std::string origin;
   std::string title;
@@ -38,12 +39,17 @@ private:
 
   void init_vals();
   void set_vals(struct mpd_connection *conn);
+  void set_vals_mpd(struct mpd_connection *conn);
+  void set_vals_volumio(struct mpd_connection *conn);
   
 public:
-  mpd_info();                         // Constructor
-  int init();                         // Initialise with current status values
+  enum { SOURCE_MPD = 0, SOURCE_VOLUMIO };
+
+  mpd_info();  // Constructor
+  int init();  // Initialise with current status values
+  void set_source(int src = SOURCE_MPD) { source = src; }
   void print_vals() const;
-  
+
   int get_volume() const;             // Volume: 0 - 100
   std::string get_origin() const;     // Song origin: station, artist, album...
   std::string get_title() const;      // Song title
