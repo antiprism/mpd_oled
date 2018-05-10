@@ -137,7 +137,9 @@ static string get_tag(const struct mpd_song *song, enum mpd_tag_type type)
     tag_vals += value;
   }
   string ascii;
-  conv.convert(tag_vals, ascii);
+  try {
+    conv.convert(tag_vals, ascii);
+  } catch (...) {}
   return ascii;
 }
   
@@ -165,13 +167,18 @@ void mpd_info::set_vals(struct mpd_connection *conn)
   mpd_command_list_end(conn);
 
   struct mpd_status *status = mpd_recv_status(conn);
-  if (status == NULL)
+  if (status == NULL) {
+    mpd_response_finish(conn);
     return;
+  }
 
 #ifndef VOLUMIO // Volumio volume is not MPD volume
   volume = mpd_status_get_volume(status);
-  if (mpd_status_get_error(status) != NULL)
+  if (mpd_status_get_error(status) != NULL) {
+    mpd_status_free(status);
+    mpd_response_finish(conn);
     return;
+  }
 #endif // VOLUMIO
 
   state = mpd_status_get_state(status);
