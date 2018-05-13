@@ -359,7 +359,7 @@ float mpd_info::get_progress() const
 
 string mpd_info::get_kbitrate_str() const
 {
-  int rate = std::min(kbitrate, 999);
+  int rate = std::min(kbitrate, 9999);
   const size_t str_len = 5;
   char str[str_len];
   snprintf(str, str_len, "%4d", rate);
