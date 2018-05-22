@@ -72,8 +72,8 @@ has been disabled (for example, if it has been set immutable) then edit
 the file directly and append the contents of mpd_oled_fifo.conf.)
 
 ```
-cp mpd_oled_fifo.conf /usr/local/etc/
-patch -d/ -p0 -N < moode_mpd_fifo.patch
+sudo cp mpd_oled_fifo.conf /usr/local/etc/
+sudo patch -d/ -p0 -N < moode_mpd_fifo.patch
 ```
 Reboot the machine from the Moode UI, then log back in and change to the
 mpd_oled source directory, e.g.
