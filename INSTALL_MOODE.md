@@ -75,8 +75,12 @@ the file directly and append the contents of mpd_oled_fifo.conf.)
 sudo cp mpd_oled_fifo.conf /usr/local/etc/
 sudo patch -d/ -p0 -N < moode_mpd_fifo.patch
 ```
-Reboot the machine from the Moode UI, then log back in and change to the
-mpd_oled source directory, e.g.
+Reboot the machine from the Moode UI. When it has restarted, go back to
+the Moode UI and click  "Moode" / "Configure" / "MPD", then click the first
+"APPLY" button on that page. This will trigger the regeneration of
+/etc/mpd.conf
+
+Log back into the machine and change to the mpd_oled source directory, e.g.
 ```
 cd mpd_oled
 ```
