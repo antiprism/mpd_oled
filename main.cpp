@@ -62,13 +62,14 @@ struct ProgOpts
   int framerate;
   int bars;
   int gap;
+  bool rotate180;
   unsigned char i2c_addr;
   int reset_gpio;
   int source;
 
   ProgOpts(): prog_name("mpd_oled"), version("0.01"),
               oled(OLED_ADAFRUIT_SPI_128x32), framerate(15), bars(16), gap(1),
-              i2c_addr(0), reset_gpio(25),
+              rotate180(false), i2c_addr(0), reset_gpio(25),
               // Default for source of status values depends on the player
               source(
 #ifdef VOLUMIO
@@ -98,6 +99,7 @@ void ProgOpts::usage()
   printf("  -b <num>   number of bars to display (default: 16)\n");
   printf("  -g <sz>    gap between bars in, pixels (default: 1)\n");
   printf("  -f <hz>    framerate in Hz (default: 15)\n");
+  printf("  -R         rotate display 180 degrees\n");
   printf("  -a <addr>  I2C address, in hex (default: default for OLED type)\n");
   printf("  -r <gpio>  I2C reset GPIO number, if needed (default: 25)\n");
   printf("Example :\n");
@@ -109,7 +111,7 @@ void ProgOpts::parse_args(int argc, char *argv[])
 {
   opterr = 1;  // suppress error message for unrecognised option
   int c;
-  while ((c=getopt(argc, argv, ":ho:b:g:f:a:r:")) != -1)
+  while ((c=getopt(argc, argv, ":ho:b:g:f:Ra:r:")) != -1)
   {
     switch (c) 
     {
@@ -147,6 +149,10 @@ void ProgOpts::parse_args(int argc, char *argv[])
               "error: -f %d: framerate must be a positive integer\n", framerate);
           exit(EXIT_FAILURE);
         }
+        break;
+
+      case 'R':
+        rotate180 = true;
         break;
 
       case 'a':
@@ -374,7 +380,8 @@ int main(int argc, char **argv)
 
   // Set up the OLED doisplay
   ArduiPi_OLED display;
-  if(!init_display(display, opts.oled, opts.i2c_addr, opts.reset_gpio)) {
+  if(!init_display(display, opts.oled, opts.i2c_addr, opts.reset_gpio,
+        opts.rotate180)) {
     fprintf(stderr, "error: could not initialise OLED\n");
     exit(EXIT_FAILURE);
   }

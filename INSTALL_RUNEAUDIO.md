@@ -114,6 +114,8 @@ the GPIO number with mpd_oled -r, e.g. `./mpd_oled -o6 -r 24 ...`. (For, SPI
 OLEDs, edit display.cc to include your connection details, if this works
 out I will provide options for these parameters.)
 
+If your display is upside down, you can rotate it 180 degrees with option '-R'.
+
 Once the display is working, edit the file mpd_oled.service to include
 your OLED type number with the mpd_oled command, and any other options.
 ```

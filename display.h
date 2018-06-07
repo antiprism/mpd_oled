@@ -62,6 +62,6 @@ void draw_text(ArduiPi_OLED &display, int x_start, int y_start, int max_len,
   
 
 bool init_display(ArduiPi_OLED &display, int oled, unsigned char i2c_addr,
-    int reset_gpio);
+    int reset_gpio, bool rotate180=false);
 
 #endif // DISPLAY_H

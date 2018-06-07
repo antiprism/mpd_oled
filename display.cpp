@@ -30,6 +30,13 @@
 using std::vector;
 using std::string;
 
+void print(ArduiPi_OLED &display, const char *str)
+{
+  int sz = strlen(str);
+  for(int i=0; i<sz; i++)
+    display.write((uint8_t)str[i]);
+}
+
 int draw_spectrum(ArduiPi_OLED &display, int x_start, int y_start, int width,
     int height, const spect_graph &spect)
 {
@@ -76,7 +83,7 @@ void draw_time(ArduiPi_OLED &display, int start_x, int start_y, int sz,
   
   display.setCursor(start_x, start_y);
   display.setTextSize(sz);
-  display.print(str);
+  print(display, str);
 }
 
 
@@ -144,12 +151,23 @@ void draw_text(ArduiPi_OLED &display, int x_start, int y_start, int max_len,
   display.setTextColor(WHITE);
   display.setCursor(x_start, y_start);
   display.setTextSize(1);
-  display.print(str.c_str());
+  print(display, str.c_str());
 }
 
+static void set_rotation(ArduiPi_OLED &display, bool upside_down)
+{
+  if(upside_down) {
+    display.sendCommand(0xA0);
+    display.sendCommand(0xC0);
+  }
+  else {
+    display.sendCommand(0xA1);
+    display.sendCommand(0xC8);
+  }
+}
 
 bool init_display(ArduiPi_OLED &display, int oled, unsigned char i2c_addr,
-    int reset_gpio)
+    int reset_gpio, bool rotate180)
 {
 // SPI
   if (display.oled_is_spi_proto(oled)) {
@@ -164,6 +182,9 @@ bool init_display(ArduiPi_OLED &display, int oled, unsigned char i2c_addr,
   }
 
   display.begin();
+  
+  set_rotation(display, rotate180);
+  display.setTextWrap(false);
 
   // init done
   display.clearDisplay();       // clears the screen  buffer

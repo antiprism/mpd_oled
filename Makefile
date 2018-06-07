@@ -9,7 +9,8 @@ else ifeq ($(PLAYER),RUNEAUDIO)
 	PLAYERLIBS=-li2c
 endif
 
-CPPFLAGS=-W -Wall -Wno-unused-variable -Wno-unused-parameter -Ofast -D$(PLAYER)
+CPPFLAGS=-W -Wall -Wno-unused-variable -Wno-unused-parameter \
+	 -Wno-strict-aliasing -Ofast -D$(PLAYER)
 
 PROG_NAME=mpd_oled
 includes = $(wildcard *.h)

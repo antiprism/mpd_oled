@@ -433,7 +433,7 @@ void ArduiPi_OLED::begin( void )
   uint8_t contrast;
   uint8_t precharge;
   
-  constructor(oled_width, oled_height);
+  reset(oled_width, oled_height);
 
   // Setup reset pin direction (used by both SPI and I2C)  
   bcm2835_gpio_fsel(rst, BCM2835_GPIO_FSEL_OUTP);
