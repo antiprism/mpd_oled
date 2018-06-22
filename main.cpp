@@ -29,6 +29,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <signal.h>
 #include <unistd.h>
 #include <pthread.h>
 #include <sys/types.h>
@@ -44,6 +45,47 @@ using std::vector;
 using std::string;
 
 const int SPECT_WIDTH = 64;
+
+ArduiPi_OLED display; // global, for use during signal handling
+
+void cleanup(void)
+{
+  // Clear and close display
+  display.clearDisplay();
+  display.display();
+  display.close();
+}
+
+void signal_handler(int sig)
+{
+  switch(sig) {
+    case SIGINT:
+    case SIGHUP:
+    case SIGTERM:
+      cleanup();
+      break;
+  }
+}
+
+void init_signals(void)
+{
+  struct sigaction new_action;
+  memset(&new_action, 0, sizeof(new_action));
+  new_action.sa_handler = &signal_handler;
+  sigemptyset(&new_action.sa_mask);
+  new_action.sa_flags = 0;
+
+  struct sigaction old_action;
+  sigaction (SIGINT, NULL, &old_action);
+  if (old_action.sa_handler != SIG_IGN)
+    sigaction (SIGINT, &new_action, NULL);
+  sigaction (SIGHUP, NULL, &old_action);
+  if (old_action.sa_handler != SIG_IGN)
+    sigaction (SIGHUP, &new_action, NULL);
+  sigaction (SIGTERM, NULL, &old_action);
+  if (old_action.sa_handler != SIG_IGN)
+    sigaction (SIGTERM, &new_action, NULL);
+}
 
 struct display_info
 {
@@ -379,7 +421,6 @@ int main(int argc, char **argv)
   opts.parse_args(argc, argv);
 
   // Set up the OLED doisplay
-  ArduiPi_OLED display;
   if(!init_display(display, opts.oled, opts.i2c_addr, opts.reset_gpio,
         opts.rotate180)) {
     fprintf(stderr, "error: could not initialise OLED\n");
@@ -417,10 +458,9 @@ int main(int argc, char **argv)
     exit(EXIT_FAILURE);
   }
 
+  init_signals();
+  atexit(cleanup);
   int loop_ret = start_idle_loop(display, fifo_file, opts);
-
-  // Free PI GPIO ports
-  display.close();
 
   if(loop_ret != 0)
     exit(EXIT_FAILURE);
