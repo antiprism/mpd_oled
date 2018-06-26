@@ -1,5 +1,5 @@
 /*
-   Copyright (c) 2018, Adrian Rossiter
+   Copyright (c) 2003-2018, Adrian Rossiter
 
    Antiprism - http://www.antiprism.com
 
@@ -26,17 +26,15 @@
    \brief Timing utilities
 */
 
-#include <sys/time.h>
+#ifndef TIMER_H
+#define TIMER_H
 
-timeval to_timeval(double tm);
-long to_long_usecs(timeval tv);
+#include <sys/time.h>
 
 /// A subsecond %Timer
 class Timer {
 private:
   timeval end;
-
-  int get_time(struct timeval *tp); // wrapper for subsecond current time
 
 public:
   /// Constructor
@@ -66,4 +64,27 @@ public:
   void sleep_until_finished();
 };
 
+/// A subsecond %Counter
+class Counter {
+private:
+  timeval start;
 
+  //int get_time(struct timeval *tp); // wrapper for subsecond current time
+
+public:
+  /// Constructor
+  Counter() { reset(); }
+
+  /// Reset and start the %Counter.
+  void reset();
+
+  /// Get the number of usecs since the %Counter started
+  /**\return The number of usecs since the Counter started */
+  long usecs() const;
+
+  /// Get the number of secs since the %Counter started
+  /**\return The number of secs since the Counter started */
+  double secs() const;
+};
+
+#endif // TIMER_H

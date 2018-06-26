@@ -26,6 +26,7 @@
 
 #include <vector>
 #include <string>
+#include <algorithm>
 
 using std::vector;
 using std::string;
@@ -152,6 +153,45 @@ void draw_text(ArduiPi_OLED &display, int x_start, int y_start, int max_len,
   display.setCursor(x_start, y_start);
   display.setTextSize(1);
   print(display, str.c_str());
+}
+
+// Draw text
+void draw_text_scroll(ArduiPi_OLED &display, int x_start, int y_start,
+    int max_len, string str, vector<double> scroll, double secs)
+{
+  if ((int)str.size() <= max_len) {
+    draw_text(display, x_start, y_start, max_len, str);
+    return;
+  }
+  const double pixels_per_sec = scroll[0];
+  const double scroll_after_secs = scroll[1];
+
+  int size = 1;
+  int W = 6*size;
+  str += "     ";
+  double elapsed = secs - scroll_after_secs;
+  int pix_shift = (elapsed<0) ? 0.0
+                  : int(elapsed*pixels_per_sec + 0.5) % (str.size()*W);
+  int pix_offset = pix_shift % W;
+  int char_pix_offset = (W-pix_offset)%W;
+  int char_shift = pix_shift / W + (char_pix_offset>0);
+  std::rotate(str.begin(), str.begin()+char_shift, str.end());
+  //fprintf(stderr, "%c : %4d : %4d : %4d : %4d\n", str[0], pix_shift, pix_offset, char_pix_offset, char_shift);
+
+  display.setTextColor(WHITE);
+  display.setTextSize(size);
+  display.setCursor(x_start, y_start);
+  // Draw first partial character
+  if(char_pix_offset>0)
+      display.drawCharPart(x_start, y_start, W - char_pix_offset, W,
+          str[str.size()-1], WHITE, BLACK, 1);
+  str.resize(max_len+1);
+  display.setCursor(x_start+char_pix_offset, y_start);
+  // Draw intermediate characters
+  print(display, str.substr(0, max_len-1).c_str());
+  // Draw last partial character
+  display.drawCharPart(x_start + (max_len-1)*W + char_pix_offset, y_start,
+      0, pix_offset ? pix_offset : W, str[max_len-1], WHITE, BLACK, 1);
 }
 
 static void set_rotation(ArduiPi_OLED &display, bool upside_down)

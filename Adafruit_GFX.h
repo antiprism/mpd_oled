@@ -92,6 +92,8 @@ class Adafruit_GFX {
       uint16_t *bitmap, uint8_t *mask, int16_t w, int16_t h),
     drawChar(int16_t x, int16_t y, unsigned char c, uint16_t color,
       uint16_t bg, uint8_t size),
+    drawCharPart(int16_t x, int16_t y, int x_off_start, int x_off_end,
+      unsigned char c, uint16_t color, uint16_t bg, uint8_t size),
     setCursor(int16_t x, int16_t y),
     setTextColor(uint16_t c),
     setTextColor(uint16_t c, uint16_t bg),

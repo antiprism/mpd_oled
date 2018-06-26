@@ -22,6 +22,8 @@
   IN THE SOFTWARE.
 */
 
+#include "timer.h"
+
 #include <string>
 #include <mpd/client.h>
 
@@ -36,6 +38,7 @@ private:
   int song_total_secs;
   int kbitrate;
   enum mpd_state state;
+  Counter last_change;
 
   void init_vals();
   void set_vals(struct mpd_connection *conn);

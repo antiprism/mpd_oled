@@ -29,9 +29,10 @@
 #include "Adafruit_GFX.h"
 #include "ArduiPi_OLED.h"
 
-#include "spect_graph.h"
+#include "display_info.h"
 
 #include <string>
+#include <vector>
 
 // Draw spectrum graph
 int draw_spectrum(ArduiPi_OLED &display, int x_start, int y_start, int width,
@@ -59,6 +60,10 @@ void draw_triangle_slider(ArduiPi_OLED &display, int x_start, int y_start,
 // Draw text
 void draw_text(ArduiPi_OLED &display, int x_start, int y_start, int max_len,
     std::string str);
+  
+// Draw text and scroll in box
+void draw_text_scroll(ArduiPi_OLED &display, int x_start, int y_start,
+    int max_len, std::string str, std::vector<double> scroll, double secs=0.0);
   
 
 bool init_display(ArduiPi_OLED &display, int oled, unsigned char i2c_addr,

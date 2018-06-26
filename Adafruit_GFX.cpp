@@ -711,6 +711,78 @@ void Adafruit_GFX::drawRGBBitmap(int16_t x, int16_t y,
 // TEXT- AND CHARACTER-HANDLING FUNCTIONS ----------------------------------
 
 // Draw a character
+void Adafruit_GFX::drawCharPart(int16_t x, int16_t y,
+  int x_off_start, int x_off_end,
+  unsigned char c, uint16_t color, uint16_t bg, uint8_t size)
+{
+    if(x_off_start >= x_off_end)
+        return;
+
+    x -= x_off_start;
+
+    if(!gfxFont) { // 'Classic' built-in font
+
+        if((x >= _width + 6 * size)            || // Clip right
+           (y >= _height + 8 * size)           || // Clip bottom
+           (x - 1 + 6 * size < 0) || // Clip left
+           (y - 1 + 8 * size < 0))   // Clip top
+           //((x + 6 * size - 1) < 0) || // Clip left
+           //((y + 8 * size - 1) < 0))   // Clip top
+            return;
+
+        if(!_cp437 && (c >= 176)) c++; // Handle 'classic' charset behavior
+
+        startWrite();
+        for(int8_t i=0; i<6; i++ ) { // Char bitmap = 5 columns
+            int x_off_pix_start = i*size;            // unclipped start
+            int x_off_pix_end = x_off_pix_start + size;  // unclipped end
+            
+            if(x_off_start >= x_off_pix_end)
+              continue;                              // start is past pix end
+            else if(x_off_start > x_off_pix_start)
+              x_off_pix_start = x_off_start;         // clipped pix start
+            
+            if(x_off_end <= x_off_pix_start)
+              break;                                 // pix start is past end
+            else if(x_off_end < x_off_pix_end)
+              x_off_pix_end = x_off_end;             // clipped pix end
+
+            int pix_width = x_off_pix_end - x_off_pix_start; // printable width
+            if(pix_width < 1)
+              break;
+
+            if(i<5) {
+                uint8_t line = pgm_read_byte(&font[c * 5 + i]);
+                for(int8_t j=0; j<8; j++, line >>= 1) {
+                    if(line & 1) {
+                        if(size == 1)
+                            writePixel(x+i, y+j, color);
+                        else
+                            writeFillRect(x+x_off_pix_start, y+j*size,
+                                          pix_width, size, color);
+                    }
+                    else if(bg != color) {
+                        if(size == 1)
+                            writePixel(x+i, y+j, bg);
+                        else
+                            writeFillRect(x+x_off_pix_start, y+j*size,
+                                          pix_width, size, bg);
+                    }
+                }
+            }
+            else {
+                if(bg != color) { // If opaque, draw vert line for last column
+                    if(size == 1) writeFastVLine(x+5, y, 8, bg);
+                    else          writeFillRect(x+x_off_pix_start, y,
+                                                pix_width, 8*size, bg);
+                }
+            }
+        }
+        endWrite();
+    }
+}
+
+// Draw a character
 void Adafruit_GFX::drawChar(int16_t x, int16_t y, unsigned char c,
   uint16_t color, uint16_t bg, uint8_t size) {
 

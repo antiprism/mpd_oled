@@ -22,9 +22,10 @@
   IN THE SOFTWARE.
 */
 
-#ifndef SPECT_GRAPH_H
-#define SPECT_GRAPH_H
+#ifndef DISPLAY_INFO_H
+#define DISPLAY_INFO_H
 
+#include "status.h"
 #include <vector>
 
 
@@ -36,5 +37,27 @@ struct spect_graph
   void init(int bars, int gap_sz) {gap = gap_sz;  heights.resize(bars, 0); }
 };
 
-#endif // SPECT_GRAPH_H
+
+struct display_info
+{
+  spect_graph spect;
+  mpd_info status;
+  Counter text_change;
+  std::vector<double> scroll;
+  int conn;
+  void conn_init() { conn = get_connection_info(); }
+  void update_from(const display_info &new_info);
+};
+
+inline void display_info::update_from(const display_info &new_info)
+{
+  bool changed = (status.get_title() != new_info.status.get_title() ||
+                  status.get_origin() != new_info.status.get_origin() ||
+                  status.get_state() != new_info.status.get_state());
+  *this = new_info;
+  if(changed)
+    text_change.reset();
+}
+
+#endif // DISPLAY_INFO_H
 

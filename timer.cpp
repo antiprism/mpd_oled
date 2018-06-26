@@ -1,5 +1,5 @@
 /*
-   Copyright (c) 2003-2016, Adrian Rossiter
+   Copyright (c) 2003-2018, Adrian Rossiter
 
    Antiprism - http://www.antiprism.com
 
@@ -22,18 +22,24 @@
   IN THE SOFTWARE.
 */
 
-/**\file timer.cc
+/**\file timer.cpp
    \brief Timing utilities
 */
 
 #include "timer.h"
 #include <unistd.h>
 
+namespace { // unnamed namespace 
+
 long to_long_usecs(timeval tv)
 {
   return tv.tv_sec * 1000000 + tv.tv_usec;
 }
 
+double to_double_secs(timeval tv)
+{
+  return tv.tv_sec + tv.tv_usec/1000000.0;
+}
 
 timeval &tv_normalise(timeval &tv)
 {
@@ -80,6 +86,8 @@ timeval to_timeval(double tm)
   return tv;
 }
 
+}; // unnamed namespace
+
 void Timer::set_timer(timeval interval)
 {
   timeval tv;
@@ -113,4 +121,21 @@ void Timer::sleep_until_finished()
 }
 
 
+void Counter::reset()
+{
+  gettimeofday(&start, 0);
+}
 
+long Counter::usecs() const
+{
+  timeval tv;
+  gettimeofday(&tv, 0);
+  return to_long_usecs(tv-start);
+}
+
+double Counter::secs() const
+{
+  timeval tv;
+  gettimeofday(&tv, 0);
+  return to_double_secs(tv-start);
+}

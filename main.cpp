@@ -23,9 +23,10 @@
 */
 
 #include "display.h"
-#include "spect_graph.h"
-#include "status.h"
+#include "display_info.h"
 #include "timer.h"
+#include "programopts.h"
+#include "utils.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -35,7 +36,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <locale.h>
-#include <getopt.h>
+#include <errno.h>
 
 #include <math.h>
 #include <vector>
@@ -87,174 +88,165 @@ void init_signals(void)
     sigaction (SIGTERM, &new_action, NULL);
 }
 
-struct display_info
-{
-  spect_graph spect;
-  mpd_info status;
-  int conn;
-  void conn_init() { conn = get_connection_info(); }
-};
-
-
-struct ProgOpts
-{
-  string prog_name;
+class OledOpts : public ProgramOpts {
+public:
+  const double DEF_SCROLL_RATE;   // pixels per second
+  const double DEF_SCROLL_DELAY;  // second delay before scrolling
   string version;
-  int oled;
-  int framerate;
-  int bars;
-  int gap;
-  bool rotate180;
-  unsigned char i2c_addr;
+  int oled;                       // OLED type, as a number
+  int framerate;                  // frame rate in Hz
+  int bars;                       // number of bars in spectrum
+  int gap;                        // gap between bars, in pixels
+  vector<double> scroll;          // rate (pixels per sec), start delay (secs)
+  bool rotate180;                 // display upside down
+  unsigned char i2c_addr;         // number of I2C address
   int reset_gpio;
   int source;
 
-  ProgOpts(): prog_name("mpd_oled"), version("0.01"),
-              oled(OLED_ADAFRUIT_SPI_128x32), framerate(15), bars(16), gap(1),
-              rotate180(false), i2c_addr(0), reset_gpio(25),
-              // Default for source of status values depends on the player
-              source(
+  OledOpts(): ProgramOpts("mpd_oled", "0.01"),
+      DEF_SCROLL_RATE(8.0),
+      DEF_SCROLL_DELAY(5.0),
+      oled(OLED_ADAFRUIT_SPI_128x32),
+      framerate(15),
+      bars(16),
+      gap(1),
+      rotate180(false),
+      i2c_addr(0),
+      reset_gpio(25),
+      // Default for source of status values depends on the player
+      source(
 #ifdef VOLUMIO
-                mpd_info::SOURCE_VOLUMIO
+        mpd_info::SOURCE_VOLUMIO
 #else
-                mpd_info::SOURCE_MPD
+        mpd_info::SOURCE_MPD
 #endif
-                )
-
-              {}
+      )
+      {
+        scroll.push_back(DEF_SCROLL_RATE);
+        scroll.push_back(DEF_SCROLL_DELAY);
+      }
+  void process_command_line(int argc, char **argv);
   void usage();
-  void parse_args(int argc, char *argv[]);
 };
 
-
-void ProgOpts::usage()
+// clang-format off
+void OledOpts::usage()
 {
-  printf("%s\n", prog_name.c_str());
-  printf("Usage: %s -o oled_type [options]\n", prog_name.c_str());
-  printf("  -o <type>  OLED type\nOLED type are:\n");
+   fprintf(stdout,
+"\n"
+"Usage: %s -o oled_type [options] [input_file]\n"
+"\n"
+"Display information about an MPD-based player on an OLED screen\n"
+"\n"
+"Options\n"
+"%s", get_program_name().c_str(), help_ver_text);
+
+   fprintf(stdout,
+"  -o <type>  OLED type, specified as a number, from the following:\n");
   for (int i=0; i<OLED_LAST_OLED;i++)
     if (strstr(oled_type_str[i], "128x64"))
-      printf("  %1d %s\n", i, oled_type_str[i]);
+      fprintf(stdout, "      %1d %s\n", i, oled_type_str[i]);
 
-  printf("Options:\n");
-  printf("  -h         help\n");
-  printf("  -b <num>   number of bars to display (default: 16)\n");
-  printf("  -g <sz>    gap between bars in, pixels (default: 1)\n");
-  printf("  -f <hz>    framerate in Hz (default: 15)\n");
-  printf("  -R         rotate display 180 degrees\n");
-  printf("  -a <addr>  I2C address, in hex (default: default for OLED type)\n");
-  printf("  -r <gpio>  I2C reset GPIO number, if needed (default: 25)\n");
-  printf("Example :\n");
-  printf( "%s -o 6 use a %s OLED\n\n", prog_name.c_str(), oled_type_str[6]);
+   fprintf(stdout,
+"  -b <num>   number of bars to display (default: 16)\n"
+"  -g <sz>    gap between bars in, pixels (default: 1)\n"
+"  -f <hz>    framerate in Hz (default: 15)\n"
+"  -s <vals>  scroll rate (pixels per second) and start delay (seconds), two"
+"             decimal values seperated by a comma (default: %.1f,%.1f)\n"
+"  -R         rotate display 180 degrees\n"
+"  -a <addr>  I2C address, in hex (default: default for OLED type)\n"
+"  -r <gpio>  I2C reset GPIO number, if needed (default: 25)\n"
+"Example :\n"
+"%s -o 6 use a %s OLED\n"
+"\n",
+      DEF_SCROLL_RATE, DEF_SCROLL_DELAY,
+      get_program_name().c_str(), oled_type_str[6]);
 }
+// clang-format on
 
-
-void ProgOpts::parse_args(int argc, char *argv[])
+void OledOpts::process_command_line(int argc, char **argv)
 {
-  opterr = 1;  // suppress error message for unrecognised option
+  opterr = 0;
   int c;
-  while ((c=getopt(argc, argv, ":ho:b:g:f:Ra:r:")) != -1)
-  {
-    switch (c) 
-    {
-      case 'o':
-        oled = (int) atoi(optarg);
-        if (oled < 0 || oled >= OLED_LAST_OLED ||
-            !strstr(oled_type_str[oled], "128x64")) {
-          fprintf(stderr, "error: -o %d: invalid 128x64 oled type (see -h)\n",
-              oled);
-          exit(EXIT_FAILURE);
-        }
-        break;
 
-      case 'b':
-        bars = (int) atoi(optarg);
-        if (bars < 2 || bars > 60) {
-          fprintf(stderr, "error: -b %d: select between 2 and 60 bars\n", bars);
-          exit(EXIT_FAILURE);
-        }
-        break;
+  handle_long_opts(argc, argv);
 
-      case 'g':
-        gap = (int) atoi(optarg);
-        if (gap < 0 || gap > 30) {
-          fprintf(stderr, "error: -g %d: select gap between 0 and 30 pixels\n",
-              gap);
-          exit(EXIT_FAILURE);
-        }
-        break;
+  while ((c=getopt(argc, argv, ":ho:b:g:f:s:Ra:r:")) != -1) {
+    if (common_opts(c, optopt))
+      continue;
 
-      case 'f':
-        framerate = (int) atoi(optarg);
-        if (framerate < 1) {
-          fprintf(stderr,
-              "error: -f %d: framerate must be a positive integer\n", framerate);
-          exit(EXIT_FAILURE);
-        }
-        break;
+    switch (c) {
+    case 'o':
+      print_status_or_exit(read_int(optarg, &oled), c);
+      if (oled < 0 || oled >= OLED_LAST_OLED ||
+          !strstr(oled_type_str[oled], "128x64"))
+        error(msg_str("invalid 128x64 oled type %d (see -h)", oled), c);
+      break;
 
-      case 'R':
-        rotate180 = true;
-        break;
+    case 'b':
+      print_status_or_exit(read_int(optarg, &bars), c);
+      if (bars < 2 || bars > 60)
+        error("select between 2 and 60 bars", c);
+      break;
 
-      case 'a':
-        if (strlen(optarg) != 2 ||
-            strspn(optarg, "01234567890aAbBcCdDeEfF") != 2 ) {
-          fprintf(stderr,
-              "error: -a %s: I2C address should be two hexadecimal digits\n",
-              optarg);
-          exit(EXIT_FAILURE);
-        }
+    case 'g':
+      print_status_or_exit(read_int(optarg, &gap), c);
+      if (gap < 0 || gap > 30)
+        error("gap must be between 0 and 30 pixels", c);
+      break;
 
-        i2c_addr = (unsigned char) strtol(optarg, NULL, 16);
-        break;
+    case 'f':
+      print_status_or_exit(read_int(optarg, &framerate), c);
+      if (framerate < 1)
+        error("framerate must be a positive integer", c);
+      break;
 
-      case 'r':
-        reset_gpio = (int) atoi(optarg);
-        if (!isdigit(optarg[0]) || reset_gpio < 0 || reset_gpio > 99) {
-          fprintf(stderr, "error: -r %s: probably invalid (not integer in "
-              "range 0 - 99), specify the\nGPIO number of the pin that RST "
-              "is connected to\n", optarg);
-          exit(EXIT_FAILURE);
-        }
-        break;
-
-      case 'h':
-        usage();
-        exit(EXIT_SUCCESS);
-        break;
-
+    case 's':
+      print_status_or_exit(read_double_list(optarg, scroll, 2), c);
+      if (scroll.size() < 1)
+        scroll.push_back(DEF_SCROLL_RATE);
+      else if (scroll[0] < 0)
+        error("scroll rate cannot be negative", c);
       
-      case '?': 
-        fprintf(stderr, "error: unrecognized option -%c.\n", optopt);
-        fprintf(stderr, "run with '-h'.\n");
-        exit(EXIT_FAILURE);
-              
-      case ':':
-        fprintf(stderr, "error: -%c missing argument.\n", optopt);
-        fprintf(stderr, "run with '-h'.\n");
-        exit(EXIT_FAILURE);
-              
-      default:
-        fprintf(stderr, "error: unknown error\n");
-        fprintf(stderr, "run with '-h'.\n");
-        exit(EXIT_FAILURE);
+      if (scroll.size() < 2)
+        scroll.push_back(DEF_SCROLL_DELAY);
+      else if (scroll[1] < 0)
+        error("scroll delay cannot be negative", c);
+      break;
+
+    case 'R':
+      rotate180 = true;
+      break;
+
+    case 'a':
+      if (strlen(optarg) != 2 ||
+          strspn(optarg, "01234567890aAbBcCdDeEfF") != 2 )
+        error("I2C address should be two hexadecimal digits", c);
+
+      i2c_addr = (unsigned char) strtol(optarg, NULL, 16);
+      break;
+
+    case 'r':
+      print_status_or_exit(read_int(optarg, &reset_gpio), c);
+      if (!isdigit(optarg[0]) || reset_gpio < 0 || reset_gpio > 99)
+        error("probably invalid (not integer in range 0 - 99), specify the\n"
+              "GPIO number of the pin that RST is connected to", c);
+      break;
+
+    default:
+      error("unknown command line error");
     }
   }
 
-  if (oled == 0) {
-    fprintf(stderr, "error: must specify a 128x64 oled with -o\n");
-    exit(EXIT_FAILURE);
-  }
+  if (oled == 0)
+    error("must specify a 128x64 oled", 'o');
   
   const int min_spect_width = bars + (bars-1)*gap; // assume bar width = 1
-  if (min_spect_width > SPECT_WIDTH) {
-    fprintf(stderr,
-"error: spectrum graph width is %d: to display %d bars with a gap of %d\n"
-"requires a minimum width of %d. Reduce the number of bars and/or the gap.\n",
-      SPECT_WIDTH, bars, gap, min_spect_width);
-    exit(EXIT_FAILURE);
-  }
+  if (min_spect_width > SPECT_WIDTH)
+     error(msg_str(
+"spectrum graph width is %d: to display %d bars with a gap of %d\n"
+"requires a minimum width of %d. Reduce the number of bars and/or the gap\n",
+         SPECT_WIDTH, bars, gap, min_spect_width));
 }
 
 string print_config_file(int bars, int framerate, string fifo_name)
@@ -301,15 +293,15 @@ void draw_spect_display(ArduiPi_OLED &display, const display_info &disp_info)
   const int W = 6;  // character width
   draw_spectrum(display, 0, 0, SPECT_WIDTH, 32, disp_info.spect);
   draw_connection(display, 128-2*W, 0, disp_info.conn);
-  //draw_slider(display, 128-5*W, 1, 11, 6, disp_info.status.get_volume());
   draw_triangle_slider(display, 128-5*W, 1, 11, 6, disp_info.status.get_volume());
   draw_text(display, 128-10*W, 0, 4, disp_info.status.get_kbitrate_str());
   
   draw_time(display, 128-10*W, 2*H, 2);
   
-  draw_text(display, 0, 4*H+4, 20, disp_info.status.get_origin());
-  draw_text(display, 0, 6*H, 20, disp_info.status.get_title());
-  //draw_slider(display, 0, 7*H+4, 128, 4, 100*disp_info.status.get_progress());
+  draw_text_scroll(display, 0, 4*H+4, 20, disp_info.status.get_origin(),
+      disp_info.scroll, disp_info.text_change.secs());
+  draw_text_scroll(display, 0, 6*H, 20, disp_info.status.get_title(),
+      disp_info.scroll, disp_info.text_change.secs());
   draw_solid_slider(display, 0, 7*H+6, 128, 2,
       100*disp_info.status.get_progress());
 }
@@ -341,7 +333,7 @@ void *update_info(void *data)
     disp_info.conn_init();            // Update connection info
 
     pthread_mutex_lock(&disp_info_lock);
-    *disp_info_orig = disp_info;
+    disp_info_orig->update_from(disp_info);
     pthread_mutex_unlock(&disp_info_lock);
 
     usleep(delay_secs * 1000000);
@@ -350,14 +342,15 @@ void *update_info(void *data)
 
 
 int start_idle_loop(ArduiPi_OLED &display, FILE *fifo_file,
-    const ProgOpts &opts)
+    const OledOpts &opts)
 {
-  const double update_sec = 0.9; // default update freq = 10 /s
-  const long select_usec = update_sec * 1001000; // slightly longer
+  const double update_sec = 1/(0.9*opts.framerate); // default update freq just under framerate
+  const long select_usec = update_sec * 1001000;    // slightly longer, but still less than framerate
   int fifo_fd = fileno(fifo_file);
   Timer timer;
   
   display_info disp_info;
+  disp_info.scroll = opts.scroll;
   disp_info.spect.init(opts.bars, opts.gap);
   disp_info.status.set_source(opts.source);
   disp_info.status.init();
@@ -417,46 +410,39 @@ int main(int argc, char **argv)
 {
   // Set locale to allow iconv transliteration to US-ASCII
   setlocale(LC_CTYPE, "en_US.UTF-8");
-  ProgOpts opts;
-  opts.parse_args(argc, argv);
+  OledOpts opts;
+  opts.process_command_line(argc, argv);
 
   // Set up the OLED doisplay
   if(!init_display(display, opts.oled, opts.i2c_addr, opts.reset_gpio,
-        opts.rotate180)) {
-    fprintf(stderr, "error: could not initialise OLED\n");
-    exit(EXIT_FAILURE);
-  }
+        opts.rotate180))
+    opts.error("could not initialise OLED");
 
   // Create a FIFO for cava to write its raw output to
   const string fifo_name = "/tmp/cava_fifo";
   unlink(fifo_name.c_str());
-  if(mkfifo(fifo_name.c_str(), 0666) == -1) {
-    perror("could not create cava FIFO for writing");
-    exit(EXIT_FAILURE);
-  }
+  if(mkfifo(fifo_name.c_str(), 0666) == -1)
+    opts.error("could not create cava FIFO for writing: " +
+               string(strerror(errno)));
 
   // Create a temporary config file for cava
   string config_file_name = print_config_file(opts.bars, opts.framerate,
       fifo_name);
-  if (config_file_name == "") {
-    perror("could not create cava config file");
-    exit(EXIT_FAILURE);
-  }
+  if (config_file_name == "")
+    opts.error("could not create cava config file: " +
+               string(strerror(errno)));
 
   // Create a pipe to a cava subprocess
   string cava_cmd = "cava -p " + config_file_name;
   FILE *from_cava = popen(cava_cmd.c_str(), "r");
-  if (from_cava == NULL) {
-    perror("could not start cava program");
-    exit(EXIT_FAILURE);
-  }
+  if (from_cava == NULL)
+    opts.error("could not start cava program: " +
+               string(strerror(errno)));
 
   // Create a file stream to read cava's raw output from
   FILE *fifo_file = fopen(fifo_name.c_str(), "rb");
-  if(fifo_file == NULL) {
-    fprintf(stderr, "could not open cava FIFO for reading\n");
-    exit(EXIT_FAILURE);
-  }
+  if(fifo_file == NULL)
+    opts.error("could not open cava FIFO for reading");
 
   init_signals();
   atexit(cleanup);
@@ -465,4 +451,5 @@ int main(int argc, char **argv)
   if(loop_ret != 0)
     exit(EXIT_FAILURE);
 
+  return 0;
 }

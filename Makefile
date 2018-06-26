@@ -19,8 +19,9 @@ includes = $(wildcard *.h)
 all: $(PROG_NAME)
 
 # Make the library
-OBJECTS=main.o timer.o status.o ArduiPi_OLED.o Adafruit_GFX.o \
-	bcm2835.o display.o
+OBJECTS=main.o timer.o status.o status_msg.o utils.o display.o\
+	programopts.o ultragetopt.o \
+	ArduiPi_OLED.o Adafruit_GFX.o bcm2835.o
 LDLIBS=-lmpdclient -lpthread $(PLAYERLIBS)
 $(OBJECTS): $(includes)
 $(PROG_NAME): $(OBJECTS)
