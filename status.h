@@ -69,10 +69,23 @@ public:
   enum mpd_state get_state() const;   // MPD_STATE_: UNKNOWN, STOP, PAUSE, START
 };
 
+class connection_info
+{
+private:
+  std::string if_name;
+  std::string ip_addr;
+  int type;
+  int link;
+  
+public:
+  enum { TYPE_ETH=0, TYPE_WIFI, TYPE_UNKNOWN };
 
-// Get network connection value
-//   -1  :  no interface, or error
-//   0-99:  ethernet connection, ethN, value = N
-//   100+:  wireless connection, link value + 100
-int get_connection_info();
+  connection_info() : type(TYPE_UNKNOWN) {}
+  bool init();
+  bool is_set() const { return type != TYPE_UNKNOWN; }
+  std::string get_if_name() const { return if_name; }
+  std::string get_ip_addr() const { return ip_addr; }
+  int get_type() const { return (int)type; }
+  int get_link() const { return link; }
+};
 

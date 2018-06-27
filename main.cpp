@@ -279,11 +279,15 @@ string print_config_file(int bars, int framerate, string fifo_name)
 }
 
 // Draw fullscreen 128x64 clock/date
-void draw_clock(ArduiPi_OLED &display)
+void draw_clock(ArduiPi_OLED &display, const display_info &disp_info)
 {
   display.clearDisplay();
-  draw_time(display, 4, 4, 4, 0);
-  draw_time(display, 4, 48, 2, 1);
+  const int H = 8;  // character height
+  const int W = 6;  // character width
+  draw_text(display, 22, 0, 16, disp_info.conn.get_ip_addr());
+  draw_connection(display, 128-2*W, 0, disp_info.conn);
+  draw_time(display, 4, 16, 4, 0);
+  draw_time(display, 32, 56, 1, 1);
 }
 
 
@@ -311,7 +315,7 @@ void draw_display(ArduiPi_OLED &display, const display_info &disp_info)
 {
   if (disp_info.status.get_state() == MPD_STATE_UNKNOWN ||
       disp_info.status.get_state() == MPD_STATE_STOP)
-    draw_clock(display);
+    draw_clock(display, disp_info);
   else
     draw_spect_display(display, disp_info);
 }

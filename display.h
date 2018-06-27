@@ -43,7 +43,8 @@ void draw_time(ArduiPi_OLED &display, int start_x, int start_y, int sz,
     int what = 0);
 
 // Draw a connection indicator, 12x8
-void draw_connection(ArduiPi_OLED &display, int x_start, int y_start, int val);
+void draw_connection(ArduiPi_OLED &display, int x_start, int y_start,
+    const connection_info &conn);
 
 // Draw a slider
 void draw_slider(ArduiPi_OLED &display, int x_start, int y_start, int width,

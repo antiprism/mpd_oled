@@ -44,8 +44,8 @@ struct display_info
   mpd_info status;
   Counter text_change;
   std::vector<double> scroll;
-  int conn;
-  void conn_init() { conn = get_connection_info(); }
+  connection_info conn;
+  void conn_init() { conn.init(); }
   void update_from(const display_info &new_info);
 };
 

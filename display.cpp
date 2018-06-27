@@ -89,21 +89,21 @@ void draw_time(ArduiPi_OLED &display, int start_x, int start_y, int sz,
 
 
 // Draw a connection indicator, 12x8
-void draw_connection(ArduiPi_OLED &display, int x_start, int y_start, int val)
+void draw_connection(ArduiPi_OLED &display, int x_start, int y_start,
+  const connection_info &conn)
 {
   const int char_ht = 8;
-  if (val > 100) {                  // wifi signal strength (>0)
-    int signal = val - 100;
+  if (conn.get_type() == connection_info::TYPE_WIFI) {
     for(int i=0; i<4; i++) {
       int ht = 2*i + 1;
       int x_off = 3*i + 1;
-      if (signal > 20*i)
+      if (conn.get_link() > 20*i)
         display.fillRect(x_start+x_off, y_start+char_ht-(1+ht), 2, ht, WHITE);
       else
         break;
     }
   }
-  else if (val >= 0 && val < 100) {             // ethernet
+  else if (conn.get_type() == connection_info::TYPE_ETH) {
     int w = 10;
     display.drawPixel(x_start+3, y_start, WHITE);
     display.drawFastHLine(x_start+1+1, y_start+1, w-1, WHITE);
