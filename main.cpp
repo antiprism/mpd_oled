@@ -124,6 +124,8 @@ public:
       {
         scroll.push_back(DEF_SCROLL_RATE);
         scroll.push_back(DEF_SCROLL_DELAY);
+        scroll.push_back(DEF_SCROLL_RATE);
+        scroll.push_back(DEF_SCROLL_DELAY);
       }
   void process_command_line(int argc, char **argv);
   void usage();
@@ -151,8 +153,12 @@ void OledOpts::usage()
 "  -b <num>   number of bars to display (default: 16)\n"
 "  -g <sz>    gap between bars in, pixels (default: 1)\n"
 "  -f <hz>    framerate in Hz (default: 15)\n"
-"  -s <vals>  scroll rate (pixels per second) and start delay (seconds), two"
-"             decimal values seperated by a comma (default: %.1f,%.1f)\n"
+"  -s <vals>  scroll rate (pixels per second) and start delay (seconds), up\n"
+"             to four comma separated decimal values (default: %.1f,%.1f) as:\n"
+"                rate_all\n"
+"                rate_all,delay_all\n"
+"                rate_title,delay_all,rate_artist\n"
+"                rate_title,delay_title,rate_artist,delay_artist\n"
 "  -R         rotate display 180 degrees\n"
 "  -a <addr>  I2C address, in hex (default: default for OLED type)\n"
 "  -r <gpio>  I2C reset GPIO number, if needed (default: 25)\n"
@@ -202,7 +208,7 @@ void OledOpts::process_command_line(int argc, char **argv)
       break;
 
     case 's':
-      print_status_or_exit(read_double_list(optarg, scroll, 2), c);
+      print_status_or_exit(read_double_list(optarg, scroll, 4), c);
       if (scroll.size() < 1)
         scroll.push_back(DEF_SCROLL_RATE);
       else if (scroll[0] < 0)
@@ -212,6 +218,17 @@ void OledOpts::process_command_line(int argc, char **argv)
         scroll.push_back(DEF_SCROLL_DELAY);
       else if (scroll[1] < 0)
         error("scroll delay cannot be negative", c);
+
+      if (scroll.size() < 3)
+        scroll.push_back(scroll[0]);
+      else if (scroll[2] < 0)
+        error("scroll rate (origin/artist) cannot be negative", c);
+
+      if (scroll.size() < 4)
+        scroll.push_back(scroll[1]);
+      else if (scroll[3] < 0)
+        error("scroll delay (origin/artist) cannot be negative", c);
+
       break;
 
     case 'R':
@@ -301,11 +318,17 @@ void draw_spect_display(ArduiPi_OLED &display, const display_info &disp_info)
   draw_text(display, 128-10*W, 0, 4, disp_info.status.get_kbitrate_str());
   
   draw_time(display, 128-10*W, 2*H, 2);
-  
+
+  vector<double> scroll_origin(disp_info.scroll.begin()+2,
+                               disp_info.scroll.begin()+4);
   draw_text_scroll(display, 0, 4*H+4, 20, disp_info.status.get_origin(),
-      disp_info.scroll, disp_info.text_change.secs());
+      scroll_origin, disp_info.text_change.secs());
+
+  vector<double> scroll_title(disp_info.scroll.begin(),
+                              disp_info.scroll.begin()+2);
   draw_text_scroll(display, 0, 6*H, 20, disp_info.status.get_title(),
-      disp_info.scroll, disp_info.text_change.secs());
+      scroll_title, disp_info.text_change.secs());
+
   draw_solid_slider(display, 0, 7*H+6, 128, 2,
       100*disp_info.status.get_progress());
 }
