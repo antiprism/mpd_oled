@@ -27,6 +27,14 @@ $(OBJECTS): $(includes)
 $(PROG_NAME): $(OBJECTS)
 	$(CXX) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 
+
+PROG_NAME2=audio_fifos
+OBJECTS2=audio_multi_fifo.o status_msg.o utils.o programopts.o \
+         ultragetopt.o
+$(OBJECTS2): $(includes)
+$(PROG_NAME2): $(OBJECTS2)
+	$(CXX) $(LDFLAGS) -o $@ $^
+
 # clear build files
 clean:
-	rm -rf *.o $(PROG_NAME)
+	rm -rf *.o $(PROG_NAME) $(PROG_NAME2)

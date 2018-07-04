@@ -99,6 +99,8 @@ public:
   int gap;                        // gap between bars, in pixels
   vector<double> scroll;          // rate (pixels per sec), start delay (secs)
   int clock_format;               // 0-3: 0,1 - 24h  2,3 - 12h  0,2 - leading 0
+  string cava_method;             // fifo, alsa or pulse
+  string cava_source;             // Path to FIFO for audio-in, alsa device...
   bool rotate180;                 // display upside down
   unsigned char i2c_addr;         // number of I2C address
   int reset_gpio;
@@ -112,6 +114,8 @@ public:
       bars(16),
       gap(1),
       clock_format(0),
+      cava_method("fifo"),
+      cava_source("/tmp/mpd_oled_fifo"),
       rotate180(false),
       i2c_addr(0),
       reset_gpio(25),
@@ -163,6 +167,8 @@ void OledOpts::usage()
 "                rate_title,delay_title,rate_artist,delay_artist\n"
 "  -C <fmt>   clock format: 0 - 24h leading 0 (default), 1 - 24h no leading 0,\n"
 "                2 - 24h leading 0, 3 - 24h no leading 0\n"
+"  -c         cava input method and source (default: '%s,%s')\n"
+"             e.g. 'fifo,/tmp/my_fifo', 'alsa,hw:5,0', 'pulse'\n"
 "  -R         rotate display 180 degrees\n"
 "  -a <addr>  I2C address, in hex (default: default for OLED type)\n"
 "  -r <gpio>  I2C reset GPIO number, if needed (default: 25)\n"
@@ -170,6 +176,7 @@ void OledOpts::usage()
 "%s -o 6 use a %s OLED\n"
 "\n",
       DEF_SCROLL_RATE, DEF_SCROLL_DELAY,
+      cava_method.c_str(), cava_source.c_str(),
       get_program_name().c_str(), oled_type_str[6]);
 }
 // clang-format on
@@ -178,10 +185,11 @@ void OledOpts::process_command_line(int argc, char **argv)
 {
   opterr = 0;
   int c;
+  int method_len;
 
   handle_long_opts(argc, argv);
 
-  while ((c=getopt(argc, argv, ":ho:b:g:f:s:C:Ra:r:")) != -1) {
+  while ((c=getopt(argc, argv, ":ho:b:g:f:s:C:c:Ra:r:")) != -1) {
     if (common_opts(c, optopt))
       continue;
 
@@ -217,7 +225,7 @@ void OledOpts::process_command_line(int argc, char **argv)
         scroll.push_back(DEF_SCROLL_RATE);
       else if (scroll[0] < 0)
         error("scroll rate cannot be negative", c);
-      
+
       if (scroll.size() < 2)
         scroll.push_back(DEF_SCROLL_DELAY);
       else if (scroll[1] < 0)
@@ -239,6 +247,31 @@ void OledOpts::process_command_line(int argc, char **argv)
       print_status_or_exit(read_int(optarg, &clock_format), c);
       if(clock_format < 0 || clock_format > 3)
         error("clock format number is not 0, 1, 2 or 3", c);
+      break;
+
+    case 'c':
+      method_len = 5;      // all the initial method strings are length 5!
+      if (strncmp(optarg, "fifo,", method_len) == 0) {
+        cava_method = "fifo";
+        if(optarg[method_len] == '\0')
+          error("cava input method is fifo, but no FIFO path was specified", c);
+      }
+      else if (strncmp(optarg, "alsa,", method_len) == 0) {
+        cava_method = "alsa";
+        if(optarg[method_len] == '\0')
+          error("cava input method is alsa, but no ALSA stream was specified",
+              c);
+      }
+      else if (strncmp(optarg, "pulse", method_len) == 0) {
+        cava_method = "pulse";
+        if(optarg[method_len] != '\0')
+          error("cava input method is pulse, but is followed by extra text", c);
+      }
+      else
+        error("cava input specifier is not in form 'fifo,fifo_path', "
+              "'alsa,alsa_stream', or 'pulse'", c);
+
+      cava_source = &optarg[method_len];
       break;
 
     case 'R':
@@ -276,7 +309,8 @@ void OledOpts::process_command_line(int argc, char **argv)
          SPECT_WIDTH, bars, gap, min_spect_width));
 }
 
-string print_config_file(int bars, int framerate, string fifo_name)
+string print_config_file(int bars, int framerate,
+    string cava_method, string cava_source, string fifo_path_cava_out)
 {
   char templt[] = "/tmp/cava_config_XXXXXX";
   int fd = mkstemp(templt);
@@ -291,8 +325,8 @@ string print_config_file(int bars, int framerate, string fifo_name)
                  "bars = %d\n"
                  "\n"
                  "[input]\n"
-                 "method = fifo\n"
-                 "source = /tmp/mpd_oled_fifo\n"
+                 "method = %s\n"
+                 "source = %s\n"
                  "\n"
                  "[output]\n"
                  "method = raw\n"
@@ -300,7 +334,8 @@ string print_config_file(int bars, int framerate, string fifo_name)
                  "channels = mono\n"
                  "raw_target = %s\n"
                  "bit_format = 8bit\n",
-          framerate, bars, fifo_name.c_str());
+          framerate, bars, cava_method.c_str(), cava_source.c_str(),
+          fifo_path_cava_out.c_str());
   fclose(ofile);
   return templt;
 }
@@ -420,14 +455,17 @@ int start_idle_loop(ArduiPi_OLED &display, FILE *fifo_file,
 
 
     // If there is data read it, otherwise use zero data.
+
     int num_bars_read = 0;
-    if(select(FD_SETSIZE, &set, NULL, NULL, &timeout) > 0)
+    if(disp_info.status.get_state() == MPD_STATE_PLAY &&
+        select(FD_SETSIZE, &set, NULL, NULL, &timeout) > 0)
       num_bars_read = fread(&disp_info.spect.heights[0], sizeof(unsigned char),
           disp_info.spect.heights.size(), fifo_file);
-    else
+    else {
       std::fill(disp_info.spect.heights.begin(), disp_info.spect.heights.end(),
           0);
-
+      usleep(0.1 * 1000000);  // 0.1 sec delay, don't idle too fast if no need
+    }
     // Update display if necessary
     if (timer.finished() || num_bars_read) {
        display.clearDisplay();
@@ -458,15 +496,15 @@ int main(int argc, char **argv)
     opts.error("could not initialise OLED");
 
   // Create a FIFO for cava to write its raw output to
-  const string fifo_name = "/tmp/cava_fifo";
-  unlink(fifo_name.c_str());
-  if(mkfifo(fifo_name.c_str(), 0666) == -1)
-    opts.error("could not create cava FIFO for writing: " +
+  const string fifo_path_cava_out = msg_str("/tmp/cava_fifo_%d", getpid());
+  unlink(fifo_path_cava_out.c_str());
+  if(mkfifo(fifo_path_cava_out.c_str(), 0666) == -1)
+    opts.error("could not create cava output FIFO for writing: " +
                string(strerror(errno)));
 
   // Create a temporary config file for cava
   string config_file_name = print_config_file(opts.bars, opts.framerate,
-      fifo_name);
+      opts.cava_method, opts.cava_source, fifo_path_cava_out);
   if (config_file_name == "")
     opts.error("could not create cava config file: " +
                string(strerror(errno)));
@@ -479,9 +517,9 @@ int main(int argc, char **argv)
                string(strerror(errno)));
 
   // Create a file stream to read cava's raw output from
-  FILE *fifo_file = fopen(fifo_name.c_str(), "rb");
+  FILE *fifo_file = fopen(fifo_path_cava_out.c_str(), "rb");
   if(fifo_file == NULL)
-    opts.error("could not open cava FIFO for reading");
+    opts.error("could not open cava output FIFO for reading");
 
   init_signals();
   atexit(cleanup);
