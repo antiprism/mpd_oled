@@ -98,6 +98,7 @@ public:
   int bars;                       // number of bars in spectrum
   int gap;                        // gap between bars, in pixels
   vector<double> scroll;          // rate (pixels per sec), start delay (secs)
+  int clock_format;               // 0-3: 0,1 - 24h  2,3 - 12h  0,2 - leading 0
   bool rotate180;                 // display upside down
   unsigned char i2c_addr;         // number of I2C address
   int reset_gpio;
@@ -110,6 +111,7 @@ public:
       framerate(15),
       bars(16),
       gap(1),
+      clock_format(0),
       rotate180(false),
       i2c_addr(0),
       reset_gpio(25),
@@ -159,6 +161,8 @@ void OledOpts::usage()
 "                rate_all,delay_all\n"
 "                rate_title,delay_all,rate_artist\n"
 "                rate_title,delay_title,rate_artist,delay_artist\n"
+"  -C <fmt>   clock format: 0 - 24h leading 0 (default), 1 - 24h no leading 0,\n"
+"                2 - 24h leading 0, 3 - 24h no leading 0\n"
 "  -R         rotate display 180 degrees\n"
 "  -a <addr>  I2C address, in hex (default: default for OLED type)\n"
 "  -r <gpio>  I2C reset GPIO number, if needed (default: 25)\n"
@@ -177,7 +181,7 @@ void OledOpts::process_command_line(int argc, char **argv)
 
   handle_long_opts(argc, argv);
 
-  while ((c=getopt(argc, argv, ":ho:b:g:f:s:Ra:r:")) != -1) {
+  while ((c=getopt(argc, argv, ":ho:b:g:f:s:C:Ra:r:")) != -1) {
     if (common_opts(c, optopt))
       continue;
 
@@ -229,6 +233,12 @@ void OledOpts::process_command_line(int argc, char **argv)
       else if (scroll[3] < 0)
         error("scroll delay (origin/artist) cannot be negative", c);
 
+      break;
+
+    case 'C':
+      print_status_or_exit(read_int(optarg, &clock_format), c);
+      if(clock_format < 0 || clock_format > 3)
+        error("clock format number is not 0, 1, 2 or 3", c);
       break;
 
     case 'R':
@@ -303,8 +313,8 @@ void draw_clock(ArduiPi_OLED &display, const display_info &disp_info)
   const int W = 6;  // character width
   draw_text(display, 22, 0, 16, disp_info.conn.get_ip_addr());
   draw_connection(display, 128-2*W, 0, disp_info.conn);
-  draw_time(display, 4, 16, 4, 0);
-  draw_time(display, 32, 56, 1, 1);
+  draw_time(display, 4, 16, 4, disp_info.clock_format);
+  draw_date(display, 32, 56, 1);
 }
 
 
@@ -316,8 +326,9 @@ void draw_spect_display(ArduiPi_OLED &display, const display_info &disp_info)
   draw_connection(display, 128-2*W, 0, disp_info.conn);
   draw_triangle_slider(display, 128-5*W, 1, 11, 6, disp_info.status.get_volume());
   draw_text(display, 128-10*W, 0, 4, disp_info.status.get_kbitrate_str());
-  
-  draw_time(display, 128-10*W, 2*H, 2);
+
+  int clock_offset = (disp_info.clock_format < 2) ? 0 : -2;
+  draw_time(display, 128-10*W+clock_offset, 2*H, 2, disp_info.clock_format);
 
   vector<double> scroll_origin(disp_info.scroll.begin()+2,
                                disp_info.scroll.begin()+4);
@@ -378,6 +389,7 @@ int start_idle_loop(ArduiPi_OLED &display, FILE *fifo_file,
   
   display_info disp_info;
   disp_info.scroll = opts.scroll;
+  disp_info.clock_format = opts.clock_format;
   disp_info.spect.init(opts.bars, opts.gap);
   disp_info.status.set_source(opts.source);
   disp_info.status.init();

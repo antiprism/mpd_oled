@@ -38,11 +38,15 @@
 int draw_spectrum(ArduiPi_OLED &display, int x_start, int y_start, int width,
     int height, const spect_graph &spect);
 
-// Draw time, according to what: 0 - time HH:MM, 1 - date DD-MM-YYYY
+// Draw time HH:MM, according to what - 0: 24h leading 0, 1: 24h no leading 0
+//                                      2: 24h leading 0, 3: 24h no leading 0
 void draw_time(ArduiPi_OLED &display, int start_x, int start_y, int sz,
-    int what = 0);
+    int clock_format);
 
-// Draw a connection indicator, 12x8
+// Fraw date - DD-MM-YYYY
+void draw_date(ArduiPi_OLED &display, int start_x, int start_y, int sz);
+
+    // Draw a connection indicator, 12x8
 void draw_connection(ArduiPi_OLED &display, int x_start, int y_start,
     const connection_info &conn);
 

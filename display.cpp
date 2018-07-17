@@ -65,23 +65,43 @@ int draw_spectrum(ArduiPi_OLED &display, int x_start, int y_start, int width,
   return 0;
 }
 
-// Draw time, according to what: 0 - time HH:MM, 1 - date DD-MM-YYYY
+// Draw time, according to clock_format: 0-3
 void draw_time(ArduiPi_OLED &display, int start_x, int start_y, int sz,
-    int what)
+    int clock_format)
 {
   display.setTextColor(WHITE);
-  
+
   time_t t = time(0);
   struct tm *now = localtime(&t);
   const size_t STR_SZ = 32;
   char str[STR_SZ];
-  if (what == 0)
-    strftime(str, STR_SZ, "%H:%M", now);
-  else if (what == 1)
-    strftime(str, STR_SZ, "%d-%m-%Y", now);
+  const char *fmts[] = { "%H:%M", "%k:%M", "%I:%M", "%l:%M" };
+  if (clock_format >= 0 || clock_format < (int)sizeof(fmts))
+    strftime(str, STR_SZ, fmts[clock_format], now);
   else
     str[0] = '\0';
-  
+
+  display.setCursor(start_x, start_y);
+  display.setTextSize(sz);
+  print(display, str);
+  int W = 6; // width of a character box
+  int N = 5; // number of character
+  if (now->tm_hour >= 12)
+     display.fillRect(start_x+W*N*sz, start_y, sz, sz, WHITE);
+}
+
+
+// Draw date - DD-MM-YYYY
+void draw_date(ArduiPi_OLED &display, int start_x, int start_y, int sz)
+{
+  display.setTextColor(WHITE);
+
+  time_t t = time(0);
+  struct tm *now = localtime(&t);
+  const size_t STR_SZ = 32;
+  char str[STR_SZ];
+  strftime(str, STR_SZ, "%d-%m-%Y", now);
+
   display.setCursor(start_x, start_y);
   display.setTextSize(sz);
   print(display, str);
