@@ -86,7 +86,7 @@ void draw_time(ArduiPi_OLED &display, int start_x, int start_y, int sz,
   print(display, str);
   int W = 6; // width of a character box
   int N = 5; // number of character
-  if (now->tm_hour >= 12)
+  if (clock_format > 1 && now->tm_hour >= 12)
      display.fillRect(start_x+W*N*sz, start_y, sz, sz, WHITE);
 }
 
