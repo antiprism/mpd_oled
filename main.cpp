@@ -360,7 +360,8 @@ void draw_spect_display(ArduiPi_OLED &display, const display_info &disp_info)
   draw_spectrum(display, 0, 0, SPECT_WIDTH, 32, disp_info.spect);
   draw_connection(display, 128-2*W, 0, disp_info.conn);
   draw_triangle_slider(display, 128-5*W, 1, 11, 6, disp_info.status.get_volume());
-  draw_text(display, 128-10*W, 0, 4, disp_info.status.get_kbitrate_str());
+  if (disp_info.status.get_kbitrate() > 0)
+    draw_text(display, 128-10*W, 0, 4, disp_info.status.get_kbitrate_str());
 
   int clock_offset = (disp_info.clock_format < 2) ? 0 : -2;
   draw_time(display, 128-10*W+clock_offset, 2*H, 2, disp_info.clock_format);
