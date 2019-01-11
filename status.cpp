@@ -55,6 +55,14 @@ namespace {
   const iconvpp::converter conv("ASCII//TRANSLIT", "UTF-8", true);
 }
 
+static string to_ascii(string str)
+{
+  string ascii;
+  try {
+    conv.convert(str, ascii);
+  } catch (...) {}
+  return ascii;
+}
 
 // https://stackoverflow.com/questions/1570511/c-code-to-get-the-ip-address
 string get_ip_address(const char *if_str)
@@ -209,7 +217,6 @@ static int get_mpd_kbitrate(struct mpd_connection *conn)
   return kbitrate;
 }
 
-
 void mpd_info::set_vals_volumio(struct mpd_connection *conn)
 {
   string volumio_status = get_volumio_status();
@@ -235,9 +242,9 @@ void mpd_info::set_vals_volumio(struct mpd_connection *conn)
     int duration = obj["duration"].isInt() ? obj["duration"].asInt() : 0;
     song_total_secs = duration;
 
-    title = obj["title"].asString();
-    origin = obj["artist"].asString();
-  }
+    title = to_ascii(obj["title"].asString());
+    origin = to_ascii(obj["artist"].asString());
+ }
   else {
     init_vals();
   }
@@ -266,11 +273,7 @@ static string get_tag(const struct mpd_song *song, enum mpd_tag_type type)
       tag_vals += "; ";
     tag_vals += value;
   }
-  string ascii;
-  try {
-    conv.convert(tag_vals, ascii);
-  } catch (...) {}
-  return ascii;
+  return to_ascii(tag_vals);
 }
   
 mpd_info::mpd_info()
