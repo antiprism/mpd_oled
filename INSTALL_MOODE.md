@@ -66,10 +66,11 @@ read it and calculate the spectrum. This is configured in /etc/mpd.conf.
 However, Moode regenerates this file, and also disables all but a single MPD
 output, in response to various events, and so the Moode code must be changed.
 The following commands copy the FIFO configuration file to
-/usr/local/etc/mpd_oled_fifo.conf and patch the Moode source code.
-(Note: if, for any reason, regeneration of /etc/mpd.conf
-has been disabled (for example, if it has been set immutable) then edit
-the file directly and append the contents of mpd_oled_fifo.conf.)
+/usr/local/etc/mpd_oled_fifo.conf and patch the Moode source code. (Note 1:
+a Moode system update may overwrite the patched code, in which case, follow
+the next instructions again. Note 2: if, for any reason, regeneration of
+/etc/mpd.conf has been disabled (for example, if it has been set immutable)
+then edit the file directly and append the contents of mpd_oled_fifo.conf.)
 
 ```
 sudo cp mpd_oled_fifo.conf /usr/local/etc/
