@@ -65,14 +65,18 @@ The MPD audio output needs to be copied to a named pipe, where Cava can
 read it and calculate the spectrum. This is configured in /etc/mpd.conf.
 However, Moode regenerates this file, and also disables all but a single MPD
 output, in response to various events, and so the Moode code must be changed.
-The following commands copy the FIFO configuration file to
-/usr/local/etc/mpd_oled_fifo.conf and patch the Moode source code. (Note 1:
-a Moode system update may overwrite the patched code, in which case, repeat
-the next instructions, and if updating from 5.0 to 5.1 also run
+The current version, Moode 5.2, includes technical measures to disallow
+code changes; run the following commands to disable them
 ```
+sqlite3 /var/local/www/db/moode-sqlite3.db "DROP TRIGGER ro_columns"
 sqlite3 /var/local/www/db/moode-sqlite3.db "UPDATE cfg_hash SET ACTION = 'warning' WHERE PARAM = '/var/www/command/worker.php'"
 sqlite3 /var/local/www/db/moode-sqlite3.db "UPDATE cfg_hash SET ACTION = 'warning' WHERE PARAM = '/var/www/inc/playerlib.php'"
 ```
+
+The following commands copy the FIFO configuration file to
+/usr/local/etc/mpd_oled_fifo.conf and patch the Moode source code. (Note 1:
+a Moode system update may overwrite the patched code, in which case, repeat
+the next instructions, and possibly also the previous instructions.
 Note 2: if, for any reason, regeneration of
 /etc/mpd.conf has been disabled (for example, if it has been set immutable)
 then edit the file directly and append the contents of mpd_oled_fifo.conf.)
@@ -137,5 +141,4 @@ sudo systemctl start mpd_oled
 ```
 If you wish to change mpd_oled parameters later then edit mpd_oled.service
 to include the changes and rerun install.sh.
-
 
