@@ -22,19 +22,11 @@ all: $(PROG_NAME)
 OBJECTS=main.o timer.o status.o status_msg.o utils.o display.o\
 	programopts.o ultragetopt.o \
 	ArduiPi_OLED.o Adafruit_GFX.o bcm2835.o
-LDLIBS=-lmpdclient -lpthread $(PLAYERLIBS)
+PROG_LIBS=-lmpdclient -lpthread $(PLAYERLIBS)
 $(OBJECTS): $(includes)
 $(PROG_NAME): $(OBJECTS)
-	$(CXX) $(LDFLAGS) -o $@ $^ $(LDLIBS)
-
-
-PROG_NAME2=audio_fifos
-OBJECTS2=audio_multi_fifo.o status_msg.o utils.o programopts.o \
-         ultragetopt.o
-$(OBJECTS2): $(includes)
-$(PROG_NAME2): $(OBJECTS2)
-	$(CXX) $(LDFLAGS) -o $@ $^
+	$(CXX) $(LDFLAGS) -o $@ $^ $(LDLIBS) $(PROG_LIBS)
 
 # clear build files
 clean:
-	rm -rf *.o $(PROG_NAME) $(PROG_NAME2)
+	rm -rf *.o $(PROG_NAME)

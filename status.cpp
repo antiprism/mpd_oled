@@ -71,7 +71,7 @@ string get_ip_address(const char *if_str)
 
   struct ifreq ifr;
   ifr.ifr_addr.sa_family = AF_INET;
-  snprintf(ifr.ifr_name, IFNAMSIZ, if_str);
+  snprintf(ifr.ifr_name, IFNAMSIZ, "%s", if_str);
   ioctl(fd, SIOCGIFADDR, &ifr);
 
   string ip_str = inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr);
@@ -397,6 +397,7 @@ int mpd_info::init()
 
 static string secs_to_time(int secs)
 {
+  secs = std::abs(secs);
   int hours = secs / 3600;
   secs = secs % 3600;
   int mins = secs / 60;
@@ -428,7 +429,7 @@ float mpd_info::get_progress() const
 
 string mpd_info::get_kbitrate_str() const
 {
-  int rate = std::min(kbitrate, 9999);
+  int rate = std::min(std::abs(kbitrate), 9999);
   const size_t str_len = 5;
   char str[str_len];
   snprintf(str, str_len, "%4d", rate);
