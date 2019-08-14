@@ -88,20 +88,18 @@ sudo patch -d/ -p0 -N < moode_mpd_fifo.patch
 Reboot the machine from the Moode UI. When it has restarted, go back to
 the Moode UI and click  "Moode" / "Configure" / "MPD", then click the first
 "APPLY" button on that page. This will trigger the regeneration of
-/etc/mpd.conf
+/etc/mpd.conf.
 
 Log back into the machine and change to the mpd_oled source directory, e.g.
 ```
 cd mpd_oled
 ```
 If you ever want to make any changes to the FIFO configuration,
-for example you might want to change buffer_time to help synchronise
-the spectrum display with the audio on your system,
 then modify /usr/local/etc/mpd_oled_fifo.conf and restart MPD,
 by going to the Moode UI Audio Config page and clicking on
 "RESTART" in the MPD section.
 
-Now build mpd_oled
+Now build mpd_oled (for Moode 5, build with a plain `make`)
 ```
 PLAYER=MOODE make
 ```

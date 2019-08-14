@@ -83,8 +83,6 @@ Update /etc/mpd.conf now by going to the RuneUI MPD Configuration
 page, and clicking on "SAVE AND APPLY" in the volume control section.
 
 If you ever want to make any changes to the FIFO configuration,
-for example you might want to change buffer_time to help synchronise
-the spectrum display with the audio on your system,
 then modify /home/your-extra-mpd.conf and restart MPD,
 by going to the RuneUI MPD Configuration page and clicking on
 "SAVE AND APPLY" in the volume control section.

@@ -7,6 +7,8 @@ ifeq ($(PLAYER),VOLUMIO)
 	PLAYERLIBS=-lcurl -ljsoncpp
 else ifeq ($(PLAYER),RUNEAUDIO)
 	PLAYERLIBS=-li2c
+else ifeq ($(PLAYER),MOODE)
+	PLAYERLIBS=-li2c
 endif
 
 CPPFLAGS=-W -Wall -Wno-unused-variable -Wno-unused-parameter \

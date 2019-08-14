@@ -59,15 +59,10 @@ audio_output {
         name            "mpd_oled_FIFO"
         path            "/tmp/mpd_oled_fifo"
         format          "44100:16:2"
-        #buffer_time     "500000"
 }
 ```
 Force Volumio to regenerate mpd.conf and restart MPD by going to
 the Web UI PLAYBACK OPTIONS and clicking on the Audio Outputs save button.
-
-Change buffer_time if you need to synchronise the spectrum display
-and the audio on your system. After any changes, click on the Web UI
-PLAYBACK OPTIONS Audio Outputs save button.
 
 If the mpd_oled clock does not display the local time then you may need
 to set the system time zone. The following command will run a console
