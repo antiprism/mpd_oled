@@ -391,6 +391,43 @@ int mpd_info::init()
   }
 #endif // VOLUMIO
 
+#ifdef MOODE
+  // On Moode, rather than MPD an alternative renderer may be playing audio.
+  // If this is the case, detailed song information will not be available,
+  // so determine and display the renderer name instead.
+
+  const char *MOODE_CURRENT_SONG_FILE = "/var/local/www/currentsong.txt";
+  // Check for MPD not playing or paused
+  if (!ret || !(state == MPD_STATE_PLAY || state == MPD_STATE_PAUSE)) {
+    FILE *file = fopen(MOODE_CURRENT_SONG_FILE, "r");
+    if (file != NULL) {
+      init_vals();
+      int line_sz = 256;  // lines of interest will be shorter than this
+      char line[line_sz];
+      char renderer_name[line_sz];
+      char state_name[line_sz];
+      while (fgets(line, line_sz - 1, file)) {
+        renderer_name[0] = '\0';  // set to null string
+        sscanf(line, "file=%[^\n]", renderer_name); // read string to newline
+        if (renderer_name[0] != '\0') {
+          origin = renderer_name; // display the render as the song origin
+          state = MPD_STATE_PLAY;
+        }
+        state_name[0] = '\0';  // set to null string
+        sscanf(line, "state=%[^\n]", state_name); // read string to newline
+        if (state_name[0] != '\0') {
+          if(strcmp(state_name, "stop") == 0)
+             state = MPD_STATE_STOP;
+        }
+      }
+
+      // If current song file state isn't set, then set to 'play'
+      if (state == MPD_STATE_UNKNOWN)
+         state = MPD_STATE_PLAY;
+    }
+  }
+#endif // MOODE
+
   return ret;
 }
 
