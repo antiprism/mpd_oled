@@ -420,6 +420,7 @@ int mpd_info::init()
              state = MPD_STATE_STOP;
         }
       }
+      fclose(file);
 
       // If current song file state isn't set, then set to 'play'
       if (state == MPD_STATE_UNKNOWN)
