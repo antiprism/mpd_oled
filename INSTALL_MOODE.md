@@ -1,5 +1,7 @@
 # Install instructions for Moode
 
+These instructions are compatible with Moode 6 (and Moode 5).
+
 ## Base system
 
 Install [Moode](http://moodeaudio.org/). Ensure a command line prompt is
