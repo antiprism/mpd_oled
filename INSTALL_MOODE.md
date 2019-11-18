@@ -122,7 +122,7 @@ For I2C OLEDs you may need to specify the I2C address, find this by running,
 e.g. `sudo i2cdetect -y 1` and specify the address with mpd_oled -a,
 e.g. `./mpd_oled -o6 -a 3d ...`. If you have a reset pin connected, specify
 the GPIO number with mpd_oled -r, e.g. `mpd_oled -o6 -r 24 ...`. (For, SPI
-OLEDs, edit display.cc to include your connection details, if this works
+OLEDs, edit display.cpp to include your connection details, if this works
 out I will provide options for these parameters.)
 
 If your display is upside down, you can rotate it 180 degrees with option '-R'.
