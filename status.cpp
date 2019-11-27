@@ -406,7 +406,9 @@ int mpd_info::init()
       char line[line_sz];
       char renderer_name[line_sz];
       char state_name[line_sz];
+      bool using_current_song_file = false;
       while (fgets(line, line_sz - 1, file)) {
+        using_current_song_file = true;
         renderer_name[0] = '\0';  // set to null string
         sscanf(line, "file=%[^\n]", renderer_name); // read string to newline
         if (renderer_name[0] != '\0') {
@@ -423,7 +425,7 @@ int mpd_info::init()
       fclose(file);
 
       // If current song file state isn't set, then set to 'play'
-      if (state == MPD_STATE_UNKNOWN)
+      if (using_current_song_file && state == MPD_STATE_UNKNOWN)
          state = MPD_STATE_PLAY;
     }
   }

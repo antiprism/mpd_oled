@@ -67,7 +67,7 @@ The MPD audio output needs to be copied to a named pipe, where Cava can
 read it and calculate the spectrum. This is configured in /etc/mpd.conf.
 However, Moode regenerates this file, and also disables all but a single MPD
 output, in response to various events, and so the Moode code must be changed.
-The current version, Moode 5.2, includes technical measures to disallow
+The current version, Moode 6, includes technical measures to disallow
 code changes; run the following commands to disable them
 ```
 sqlite3 /var/local/www/db/moode-sqlite3.db "DROP TRIGGER ro_columns"
@@ -88,9 +88,13 @@ sudo cp mpd_oled_fifo.conf /usr/local/etc/
 sudo patch -d/ -p0 -N < moode_mpd_fifo.patch
 ```
 Reboot the machine from the Moode UI. When it has restarted, go back to
-the Moode UI and click  "Moode" / "Configure" / "MPD", then click the first
-"APPLY" button on that page. This will trigger the regeneration of
+the Moode UI and click  "Moode" / "Configure" / "MPD", then click the "SAVE"
+button at the top of that page. This will trigger the regeneration of
 /etc/mpd.conf.
+
+Enable the Moode metadata file. Go to Moode / Configure / System, scroll
+down to "Local Services", set "Metadata file" to "ON" and click on the
+adjacent "SET" button to apply the change.
 
 Log back into the machine and change to the mpd_oled source directory, e.g.
 ```
