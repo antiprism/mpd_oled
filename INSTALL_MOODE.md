@@ -44,13 +44,6 @@ dtparam=i2c_arm_baudrate=400000
 ```
 And then restart the Pi.
 
-If the mpd_oled clock does not display the local time then you may need
-to set the system time zone. The following command will run a console
-based application where you can specify your location
-```
-sudo dpkg-reconfigure tzdata
-```
-
 ## Build and install mpd_oled
 
 Install the packages needed to build the program
@@ -87,14 +80,14 @@ then edit the file directly and append the contents of mpd_oled_fifo.conf.)
 sudo cp mpd_oled_fifo.conf /usr/local/etc/
 sudo patch -d/ -p0 -N < moode_mpd_fifo.patch
 ```
-Reboot the machine from the Moode UI. When it has restarted, go back to
-the Moode UI and click  "Moode" / "Configure" / "MPD", then click the "SAVE"
-button at the top of that page. This will trigger the regeneration of
-/etc/mpd.conf.
 
-Enable the Moode metadata file. Go to Moode / Configure / System, scroll
-down to "Local Services", set "Metadata file" to "ON" and click on the
-adjacent "SET" button to apply the change.
+Enable the Moode metadata file
+```
+sqlite3 /var/local/www/db/moode-sqlite3.db "update cfg_system set value=1 where param='extmeta'" && mpc add ""
+
+```
+Go to the Moode UI and set your timezone at "Moode" / "Configure" / "System",
+then (essential) reboot the machine.
 
 Log back into the machine and change to the mpd_oled source directory, e.g.
 ```
@@ -103,7 +96,7 @@ cd mpd_oled
 If you ever want to make any changes to the FIFO configuration,
 then modify /usr/local/etc/mpd_oled_fifo.conf and restart MPD,
 by going to the Moode UI Audio Config page and clicking on
-"RESTART" in the MPD section.
+"RESTART" in the MPD section (for Moode 5, restart MPD now).
 
 Now build mpd_oled (for Moode 5, build with a plain `make`)
 ```
