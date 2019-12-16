@@ -18,7 +18,7 @@ instructions. It installs extra packages needed for the build and does not
 install the Pulseaudio development package.
 ```
 sudo apt-get update
-sudo apt-get install git-core autoconf make libtool libfftw3-dev libasound2-dev
+sudo apt-get install git-core autoconf make libtool libfftw3-dev libasound2-dev libiniparser-dev
 git clone https://github.com/karlstav/cava
 cd cava
 ./autogen.sh
