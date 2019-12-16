@@ -52,6 +52,7 @@ ArduiPi_OLED display; // global, for use during signal handling
 void cleanup(void)
 {
   // Clear and close display
+  display.invertDisplay(false);
   display.clearDisplay();
   display.display();
   display.close();
@@ -101,6 +102,7 @@ public:
   int clock_format;               // 0-3: 0,1 - 24h  2,3 - 12h  0,2 - leading 0
   string cava_method;             // fifo, alsa or pulse
   string cava_source;             // Path to FIFO for audio-in, alsa device...
+  double invert;
   bool rotate180;                 // display upside down
   unsigned char i2c_addr;         // number of I2C address
   int reset_gpio;
@@ -116,6 +118,7 @@ public:
       clock_format(0),
       cava_method("fifo"),
       cava_source("/tmp/mpd_oled_fifo"),
+      invert(0),
       rotate180(false),
       i2c_addr(0),
       reset_gpio(25),
@@ -170,6 +173,9 @@ void OledOpts::usage()
 "  -c         cava input method and source (default: '%s,%s')\n"
 "             e.g. 'fifo,/tmp/my_fifo', 'alsa,hw:5,0', 'pulse'\n"
 "  -R         rotate display 180 degrees\n"
+"  -I <val>   invert black/white: n - normal (default), i - invert,\n"
+"             number - switch between n and i with this period (hours), which\n"
+"             may help avoid screen burn\n"
 "  -a <addr>  I2C address, in hex (default: default for OLED type)\n"
 "  -r <gpio>  I2C reset GPIO number, if needed (default: 25)\n"
 "Example :\n"
@@ -189,7 +195,7 @@ void OledOpts::process_command_line(int argc, char **argv)
 
   handle_long_opts(argc, argv);
 
-  while ((c=getopt(argc, argv, ":ho:b:g:f:s:C:c:Ra:r:")) != -1) {
+  while ((c=getopt(argc, argv, ":ho:b:g:f:s:C:c:RI:a:r:")) != -1) {
     if (common_opts(c, optopt))
       continue;
 
@@ -278,9 +284,21 @@ void OledOpts::process_command_line(int argc, char **argv)
       rotate180 = true;
       break;
 
+    case 'I':
+      if (strcmp(optarg, "n") == 0)
+        invert = 0;
+      else if (strcmp(optarg, "i") == 0)
+        invert = -1;
+      else if (read_double(optarg, &invert)) {
+        if(invert <= 0)
+          error("number of hours for period must be positive number", c);
+      }
+      else
+          error("invalid value, should be n, i or a positive number", c);
+      break;
+
     case 'a':
-      if (strlen(optarg) != 2 ||
-          strspn(optarg, "01234567890aAbBcCdDeEfF") != 2 )
+      if (strlen(optarg) != 2 || strspn(optarg, "01234567890aAbBcCdDeEfF") != 2)
         error("I2C address should be two hexadecimal digits", c);
 
       i2c_addr = (unsigned char) strtol(optarg, NULL, 16);
@@ -414,6 +432,11 @@ void *update_info(void *data)
   }
 };
 
+bool get_invert(double period)
+{
+  return (period > 0) ? (fmod(time(0) / 3600.0, 2 * period) > period) : period;
+}
+
 
 int start_idle_loop(ArduiPi_OLED &display, FILE *fifo_file,
     const OledOpts &opts)
@@ -470,6 +493,7 @@ int start_idle_loop(ArduiPi_OLED &display, FILE *fifo_file,
     if (timer.finished() || num_bars_read) {
        display.clearDisplay();
        pthread_mutex_lock(&disp_info_lock);
+       display.invertDisplay(get_invert(opts.invert));
        draw_display(display, disp_info);
        pthread_mutex_unlock(&disp_info_lock);
        display.display();
