@@ -17,11 +17,11 @@ mpd_oled uses Cava, a bar spectrum audio visualizer, to calculate the spectrum
 The commands to download, build and install Cava are as follows.
 ```
 sudo apt-get update
-sudo apt-get install libfftw3-dev libasound2-dev
+sudo apt-get install libfftw3-dev libasound2-dev libiniparser-dev
 git clone https://github.com/karlstav/cava
 cd cava
 ./autogen.sh
-./configure
+CPPFLAGS=-I/usr/include/iniparser ./configure
 make
 sudo make install
 ```

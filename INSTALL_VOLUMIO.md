@@ -21,6 +21,7 @@ sudo apt-get update
 sudo apt-get install git-core autoconf make libtool libfftw3-dev libasound2-dev
 git clone https://github.com/karlstav/cava
 cd cava
+git checkout -b pre_iniparser_removal 3cc2f9f
 ./autogen.sh
 ./configure
 make
