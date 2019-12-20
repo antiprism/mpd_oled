@@ -54,7 +54,6 @@ The commands to download, build and install Cava on RuneAudio are as follows
 cd ~
 git clone https://github.com/karlstav/cava
 cd cava
-git checkout -b pre_iniparser_removal 3cc2f9f
 ./autogen.sh
 CC=clang ./configure
 make
