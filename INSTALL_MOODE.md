@@ -1,6 +1,7 @@
 # Install instructions for Moode
 
-These instructions are compatible with Moode 6 (and Moode 5).
+These instructions are compatible with Moode 6 (and Moode 5) using a
+32-bit kernel architecture.
 
 ## Base system
 
