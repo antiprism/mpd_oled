@@ -37,9 +37,10 @@ I use a cheap 4 pin I2C SSH1106 display with a Raspberry Pi Zero. It is
 have the line `dtparam=i2c_arm=on`. In /etc/modules I have the line `i2c-dev`.
 
 The I2C bus speed on your system may be too slow for a reasonable screen
-refresh. Set a higher bus speed by adding the
-following line to /boot/config.txt (or try a higher value for a higher
-screen refresh, I use 800000 with a 25 FPS screen refresh)
+refresh. Set a higher bus speed by adding the following line to
+/boot/userconfig.txt (or use /boot/config.txt for Volumio versions before
+2.673), or try a higher value for a higher screen refresh (I use 800000 with a
+25 FPS screen refresh)
 ```
 dtparam=i2c_arm_baudrate=400000
 ```
