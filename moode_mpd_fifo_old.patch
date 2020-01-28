@@ -1,27 +1,19 @@
 diff -Naru /var/www/command/worker.php www/command/worker.php
---- /var/www/command/worker.php	2020-01-25 13:33:37.135400855 +0100
-+++ www/command/worker.php	2020-01-27 20:20:38.617844698 +0100
-@@ -390,6 +390,7 @@
+--- /var/www/command/worker.php	2019-04-14 00:59:03.238125950 +0200
++++ www/command/worker.php	2019-04-28 07:59:38.811966407 +0200
+@@ -405,6 +405,7 @@
  workerLog('worker: Configure MPD outputs');
  $mpdoutput = configMpdOutputs();
  sysCmd('mpc enable only ' . $mpdoutput);
 +sysCmd('mpc enable mpd_oled_FIFO');
  setMpdHttpd();
- // Report mpd outputs
+ // report mpd outputs
  sendMpdCmd($sock, 'outputs');
 diff -Naru /var/www/inc/playerlib.php www/inc/playerlib.php
---- /var/www/inc/playerlib.php	2020-01-25 13:33:43.625386712 +0100
-+++ www/inc/playerlib.php	2020-01-27 20:43:29.994506362 +0100
-@@ -201,6 +201,7 @@
- }
- 
- function integrityCheck() {
-+        return 'passed';
- 	$warning = false;
- 
- 	// Check database schema
-@@ -1649,6 +1650,9 @@
- 	$data .= "#allowed_formats \"48000:16:2\"\n";
+--- /var/www/inc/playerlib.php	2019-04-14 01:01:35.957370609 +0200
++++ www/inc/playerlib.php	2019-04-28 08:03:20.133466875 +0200
+@@ -1295,6 +1295,9 @@
+ 	$data .= "always_on \"yes\"\n";
  	$data .= "}\n";
  
 +        // mpd_oled FIFO

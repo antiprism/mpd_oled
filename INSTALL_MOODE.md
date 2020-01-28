@@ -76,6 +76,8 @@ the next instructions, and possibly also the previous instructions.
 Note 2: if, for any reason, regeneration of
 /etc/mpd.conf has been disabled (for example, if it has been set immutable)
 then edit the file directly and append the contents of mpd_oled_fifo.conf.)
+(for older versions Moode, 6.4.0 and earlier, in the second command below
+specify the patch file moode_mpd_fifo_old.patch).
 
 ```
 sudo cp mpd_oled_fifo.conf /usr/local/etc/
