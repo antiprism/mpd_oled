@@ -51,8 +51,9 @@
 #define OLED_SEEED_I2C_128x64     4
 #define OLED_SEEED_I2C_96x96      5
 #define OLED_SH1106_I2C_128x64    6
+#define OLED_SH1106_SPI_128x64    7
 
-#define OLED_LAST_OLED            7 /* always last type, used in code to end array */
+#define OLED_LAST_OLED            8 /* always last type, used in code to end array */
 
 static const char * oled_type_str[] = {
     "Adafruit SPI 128x32",
@@ -61,7 +62,8 @@ static const char * oled_type_str[] = {
     "Adafruit I2C 128x64",
     "Seeed I2C 128x64",
     "Seeed I2C 96x96",
-    "SH1106 I2C 128x64"
+    "SH1106 I2C 128x64",
+    "SH1106 SPI 128x64"
 };
 
 // Arduino Compatible type

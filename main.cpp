@@ -106,6 +106,8 @@ public:
   bool rotate180;                 // display upside down
   unsigned char i2c_addr;         // number of I2C address
   int reset_gpio;
+  int spi_dc_gpio;                // SPI DC
+  int spi_cs;                     // SPI CS - 0: CS0, 1: CS1
   int source;
 
   OledOpts(): ProgramOpts("mpd_oled", "0.01"),
@@ -122,6 +124,8 @@ public:
       rotate180(false),
       i2c_addr(0),
       reset_gpio(25),
+      spi_dc_gpio(OLED_SPI_DC),
+      spi_cs(OLED_SPI_CS0),
       // Default for source of status values depends on the player
       source(
 #ifdef VOLUMIO
@@ -154,7 +158,7 @@ void OledOpts::usage()
 
    fprintf(stdout,
 "  -o <type>  OLED type, specified as a number, from the following:\n");
-  for (int i=0; i<OLED_LAST_OLED;i++)
+  for (int i=0; i<OLED_LAST_OLED; i++)
     if (strstr(oled_type_str[i], "128x64"))
       fprintf(stdout, "      %1d %s\n", i, oled_type_str[i]);
 
@@ -177,7 +181,9 @@ void OledOpts::usage()
 "             number - switch between n and i with this period (hours), which\n"
 "             may help avoid screen burn\n"
 "  -a <addr>  I2C address, in hex (default: default for OLED type)\n"
-"  -r <gpio>  I2C reset GPIO number, if needed (default: 25)\n"
+"  -r <gpio>  I2C/SPI reset GPIO number, if needed (default: 25)\n"
+"  -D <gpio>  SPI DC GPIO number (default: 24)\n"
+"  -S <gpio>  SPI CS number (default: 0)\n"
 "Example :\n"
 "%s -o 6 use a %s OLED\n"
 "\n",
@@ -195,7 +201,7 @@ void OledOpts::process_command_line(int argc, char **argv)
 
   handle_long_opts(argc, argv);
 
-  while ((c=getopt(argc, argv, ":ho:b:g:f:s:C:c:RI:a:r:")) != -1) {
+  while ((c=getopt(argc, argv, ":ho:b:g:f:s:C:c:RI:a:r:D:S:")) != -1) {
     if (common_opts(c, optopt))
       continue;
 
@@ -311,6 +317,19 @@ void OledOpts::process_command_line(int argc, char **argv)
               "GPIO number of the pin that RST is connected to", c);
       break;
 
+    case 'D':
+      print_status_or_exit(read_int(optarg, &spi_dc_gpio), c);
+      if (!isdigit(optarg[0]) || reset_gpio < 0 || reset_gpio > 99)
+        error("probably invalid (not integer in range 0 - 99), specify the\n"
+              "GPIO number of the pin that SPI DC is connected to", c);
+      break;
+
+    case 'S':
+      print_status_or_exit(read_int(optarg, &spi_cs), c);
+      if (spi_cs < 0 || spi_cs > 1)
+        error("SPI CS should be 0 or 1", c);
+      break;
+
     default:
       error("unknown command line error");
     }
@@ -318,7 +337,7 @@ void OledOpts::process_command_line(int argc, char **argv)
 
   if (oled == 0)
     error("must specify a 128x64 oled", 'o');
-  
+
   const int min_spect_width = bars + (bars-1)*gap; // assume bar width = 1
   if (min_spect_width > SPECT_WIDTH)
      error(msg_str(
@@ -362,7 +381,7 @@ string print_config_file(int bars, int framerate,
 void draw_clock(ArduiPi_OLED &display, const display_info &disp_info)
 {
   display.clearDisplay();
-  const int H = 8;  // character height
+  // const int H = 8;  // character height
   const int W = 6;  // character width
   draw_text(display, 22, 0, 16, disp_info.conn.get_ip_addr());
   draw_connection(display, 128-2*W, 0, disp_info.conn);
@@ -445,14 +464,14 @@ int start_idle_loop(ArduiPi_OLED &display, FILE *fifo_file,
   const long select_usec = update_sec * 1001000;    // slightly longer, but still less than framerate
   int fifo_fd = fileno(fifo_file);
   Timer timer;
-  
+
   display_info disp_info;
   disp_info.scroll = opts.scroll;
   disp_info.clock_format = opts.clock_format;
   disp_info.spect.init(opts.bars, opts.gap);
   disp_info.status.set_source(opts.source);
   disp_info.status.init();
- 
+
   // Update MPD info in separate thread to avoid stuttering in the spectrum
   // animation.
   pthread_t update_info_thread;
@@ -516,7 +535,7 @@ int main(int argc, char **argv)
 
   // Set up the OLED doisplay
   if(!init_display(display, opts.oled, opts.i2c_addr, opts.reset_gpio,
-        opts.rotate180))
+	opts.spi_dc_gpio, opts.spi_cs, opts.rotate180))
     opts.error("could not initialise OLED");
 
   // Create a FIFO for cava to write its raw output to

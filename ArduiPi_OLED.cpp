@@ -255,6 +255,7 @@ boolean ArduiPi_OLED::oled_is_spi_proto(uint8_t OLED_TYPE)
   {
     case OLED_ADAFRUIT_SPI_128x32:
     case OLED_ADAFRUIT_SPI_128x64:
+    case OLED_SH1106_SPI_128x64:
       return true;
     break;
   }
@@ -312,6 +313,10 @@ boolean ArduiPi_OLED::select_oled(uint8_t OLED_TYPE, int8_t i2c_addr)
       _i2c_addr = SH1106_I2C_ADDRESS;
     break;
     
+    case OLED_SH1106_SPI_128x64:
+      ;
+    break;
+
     // houston, we have a problem
     default:
       return false;
@@ -899,22 +904,44 @@ void ArduiPi_OLED::display(void)
   {
     // Setup D/C line to high to switch to data mode
     bcm2835_gpio_write(dc, HIGH);
-
-    // Send all data to OLED
-    for ( i=0; i<oled_buff_size; i++) 
+    if (oled_type == OLED_SH1106_SPI_128x64)
     {
-      fastSPIwrite(*p++);
-    }
-
-    // I wonder why we have to do this (check datasheet)
-    if (oled_height == 32) 
-    {
-      for (uint16_t i=0; i<oled_buff_size; i++) 
+      char buff[17] ;
+      uint8_t x ;
+      buff[0] = SSD_Data_Mode;
+      for (uint8_t k=0; k<8; k++)
       {
-        fastSPIwrite(0);
+        sendCommand(0xB0+k);//set page addressSSD_Data_Mode;
+        sendCommand(0x02) ;//set lower column address
+        sendCommand(0x10) ;//set higher column address
+        bcm2835_gpio_write(dc, HIGH);
+
+        for( i=0; i<8; i++)
+        {
+          for (x=1; x<=16; x++)
+          buff[x] = *p++;
+
+         fastSPIwrite(&buff[1], 16);
+        }
       }
     }
-    
+    else
+    {
+      // Send all data to OLED
+      for ( i=0; i<oled_buff_size; i++)
+      {
+        fastSPIwrite(*p++);
+      }
+
+      // I wonder why we have to do this (check datasheet)
+      if (oled_height == 32) 
+      {
+        for (uint16_t i=0; i<oled_buff_size; i++) 
+        {
+          fastSPIwrite(0);
+        }
+      }
+    }  
   }
   // I2C
   else 

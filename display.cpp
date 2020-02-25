@@ -58,7 +58,7 @@ int draw_spectrum(ArduiPi_OLED &display, int x_start, int y_start, int width,
     // map vals range to graph ht
     int val = bar_height_max * spect.heights[i] / 255.0 + 0.5;
     int x = x_start + i*(bar_width+gap);
-    int y = y_start+2;
+    // int y = y_start+2;
     if(val)
        display.fillRect(x, y_start + height - val - 2, bar_width, val, WHITE);
   }
@@ -227,13 +227,13 @@ static void set_rotation(ArduiPi_OLED &display, bool upside_down)
 }
 
 bool init_display(ArduiPi_OLED &display, int oled, unsigned char i2c_addr,
-    int reset_gpio, bool rotate180)
+    int reset_gpio, int spi_dc_gpio, int spi_cs, bool rotate180)
 {
-// SPI
   if (display.oled_is_spi_proto(oled)) {
     // SPI change parameters to fit to your LCD
-    if ( !display.init(OLED_SPI_DC, reset_gpio, OLED_SPI_CS, oled) )
+    if ( !display.init(spi_dc_gpio, reset_gpio, spi_cs, oled) )
       return false;
+    bcm2835_spi_setClockSpeed(256); // ~1MHz
   }
   else {
     // I2C change parameters to fit to your LCD
@@ -242,13 +242,13 @@ bool init_display(ArduiPi_OLED &display, int oled, unsigned char i2c_addr,
   }
 
   display.begin();
-  
+
   set_rotation(display, rotate180);
   display.setTextWrap(false);
 
   // init done
   display.clearDisplay();       // clears the screen  buffer
-  display.display();   		// display it (clear display)
+  display.display();            // display it (clear display)
 
   return true;
 }
