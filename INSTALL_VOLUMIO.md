@@ -74,8 +74,8 @@ audio_output {
 }
 ```
 After editing the file it is important to force Volumio to regenerate
-mpd.conf and restart MPD. Do this by going to the Web UI PLAYBACK OPTIONS
-and clicking on the Audio Outputs save button.
+mpd.conf and restart MPD. To do this, open the Web UI and go to
+Settings > Playback Options then click on Save in the Audio Output section.
 
 ### Set time zone
 If the mpd_oled clock does not display the local time then you may need

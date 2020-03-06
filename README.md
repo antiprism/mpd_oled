@@ -27,3 +27,5 @@ C.A.V.A. is a bar spectrum audio visualizer: <https://github.com/karlstav/cava>
 OLED interface based on ArduiPI_OLED: <https://github.com/hallard/ArduiPi_OLED>
 (which is based on the Adafruit_SSD1306, Adafruit_GFX, and bcm2835 library
 code).
+
+C library for Broadcom BCM 2835: <https://www.airspayce.com/mikem/bcm2835/>
