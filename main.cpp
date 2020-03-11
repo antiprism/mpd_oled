@@ -105,6 +105,7 @@ public:
   double invert;
   bool rotate180;                 // display upside down
   unsigned char i2c_addr;         // number of I2C address
+  int i2c_bus;                    // number of I2C bus
   int reset_gpio;
   int spi_dc_gpio;                // SPI DC
   int spi_cs;                     // SPI CS - 0: CS0, 1: CS1
@@ -123,6 +124,7 @@ public:
       invert(0),
       rotate180(false),
       i2c_addr(0),
+      i2c_bus(1),
       reset_gpio(25),
       spi_dc_gpio(OLED_SPI_DC),
       spi_cs(OLED_SPI_CS0),
@@ -181,6 +183,7 @@ void OledOpts::usage()
 "             number - switch between n and i with this period (hours), which\n"
 "             may help avoid screen burn\n"
 "  -a <addr>  I2C address, in hex (default: default for OLED type)\n"
+"  -B num     I2C bus number (default: 1, giving device /dev/i2c-1)\n"
 "  -r <gpio>  I2C/SPI reset GPIO number, if needed (default: 25)\n"
 "  -D <gpio>  SPI DC GPIO number (default: 24)\n"
 "  -S <gpio>  SPI CS number (default: 0)\n"
@@ -201,7 +204,7 @@ void OledOpts::process_command_line(int argc, char **argv)
 
   handle_long_opts(argc, argv);
 
-  while ((c=getopt(argc, argv, ":ho:b:g:f:s:C:c:RI:a:r:D:S:")) != -1) {
+  while ((c=getopt(argc, argv, ":ho:b:g:f:s:C:c:RI:a:B:r:D:S:")) != -1) {
     if (common_opts(c, optopt))
       continue;
 
@@ -308,6 +311,12 @@ void OledOpts::process_command_line(int argc, char **argv)
         error("I2C address should be two hexadecimal digits", c);
 
       i2c_addr = (unsigned char) strtol(optarg, NULL, 16);
+      break;
+
+    case 'B':
+      print_status_or_exit(read_int(optarg, &i2c_bus), c);
+      if (i2c_bus < 0)
+        error("bus number cannot be negative", c);
       break;
 
     case 'r':
@@ -534,8 +543,9 @@ int main(int argc, char **argv)
   opts.process_command_line(argc, argv);
 
   // Set up the OLED doisplay
-  if(!init_display(display, opts.oled, opts.i2c_addr, opts.reset_gpio,
-	opts.spi_dc_gpio, opts.spi_cs, opts.rotate180))
+  if (!init_display(display, opts.oled, opts.i2c_addr, opts.i2c_bus,
+                    opts.reset_gpio, opts.spi_dc_gpio, opts.spi_cs,
+                    opts.rotate180))
     opts.error("could not initialise OLED");
 
   // Create a FIFO for cava to write its raw output to

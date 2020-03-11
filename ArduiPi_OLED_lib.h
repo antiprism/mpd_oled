@@ -24,6 +24,7 @@
 #include <string.h>
 #include <unistd.h> 
 #include "bcm2835.h"
+#include "bcm2835_i2c.h"
 
 // Configuration Pin for ArduiPi board
 #define OLED_SPI_RESET RPI_V2_GPIO_P1_22 /* GPIO 25 pin 22  */

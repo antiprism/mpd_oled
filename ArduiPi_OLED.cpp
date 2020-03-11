@@ -160,7 +160,7 @@ inline void ArduiPi_OLED::fastSPIwrite(char* tbuf, uint32_t len) {
   bcm2835_spi_writenb(tbuf, len);
 }
 inline void ArduiPi_OLED::fastI2Cwrite(char* tbuf, uint32_t len) {
-  bcm2835_i2c_write(tbuf, len);
+  bcm2835_i2c_alt_write(tbuf, len);
 }
 
 // the most basic function, set a single pixel
@@ -385,7 +385,8 @@ boolean ArduiPi_OLED::init(int8_t DC, int8_t RST, int8_t CS, uint8_t OLED_TYPE)
 }
 
 // initializer for I2C - we only indicate the reset pin and OLED type !
-boolean ArduiPi_OLED::init(int8_t RST, uint8_t OLED_TYPE, int8_t i2c_addr)
+boolean ArduiPi_OLED::init(int8_t RST, uint8_t OLED_TYPE, int8_t i2c_addr,
+    int i2c_bus)
 {
   dc = cs = -1; // DC and chip Select do not exist in I2C
   rst = RST;
@@ -395,14 +396,14 @@ boolean ArduiPi_OLED::init(int8_t RST, uint8_t OLED_TYPE, int8_t i2c_addr)
     return false;
 
   // Init & Configure Raspberry PI I2C
-  if (bcm2835_i2c_begin()==0)
+  if (bcm2835_i2c_alt_begin(i2c_bus)==0)
     return false;
     
-  bcm2835_i2c_setSlaveAddress(_i2c_addr) ;
+  bcm2835_i2c_alt_setSlaveAddress(_i2c_addr) ;
     
   // Set clock to 400 KHz
   // does not seem to work, will check this later
-  // bcm2835_i2c_set_baudrate(400000);
+  // bcm2835_i2c_alt_set_baudrate(400000);
 
   // Setup reset pin direction as output
   bcm2835_gpio_fsel(rst, BCM2835_GPIO_FSEL_OUTP);
@@ -424,7 +425,7 @@ void ArduiPi_OLED::close(void)
 
     // Release Raspberry I2C
   if ( isI2C() )
-    bcm2835_i2c_end();
+    bcm2835_i2c_alt_end();
 
   // Release Raspberry I/O control
   bcm2835_close();

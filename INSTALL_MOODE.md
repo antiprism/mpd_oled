@@ -134,7 +134,8 @@ For I2C OLEDs (mpd_oled -o 3, 4 or 6) you may need to specify the I2C address,
 find this by running,
 e.g. `sudo i2cdetect -y 1` and specify the address with mpd_oled -a,
 e.g. `./mpd_oled -o6 -a 3d ...`. If you have a reset pin connected, specify
-the GPIO number with mpd_oled -r, e.g. `mpd_oled -o6 -r 24 ...`.
+the GPIO number with mpd_oled -r, e.g. `mpd_oled -o6 -r 24 ...`. Specify
+the I2C bus number, if not 1, with mpd_oled -B, e.g. `mpd_oled -o6 -B 0 ...`
 
 For, SPI OLEDs (mpd_oled -o 1 or 7), you may need to specify your reset pin
 GPIO number (mpd_oled -r, default 25), DC pin GPIO number (mpd_oled -D,

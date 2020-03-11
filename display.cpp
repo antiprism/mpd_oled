@@ -227,7 +227,7 @@ static void set_rotation(ArduiPi_OLED &display, bool upside_down)
 }
 
 bool init_display(ArduiPi_OLED &display, int oled, unsigned char i2c_addr,
-    int reset_gpio, int spi_dc_gpio, int spi_cs, bool rotate180)
+    int i2c_bus, int reset_gpio, int spi_dc_gpio, int spi_cs, bool rotate180)
 {
   if (display.oled_is_spi_proto(oled)) {
     // SPI change parameters to fit to your LCD
@@ -237,7 +237,7 @@ bool init_display(ArduiPi_OLED &display, int oled, unsigned char i2c_addr,
   }
   else {
     // I2C change parameters to fit to your LCD
-    if ( !display.init(reset_gpio, oled, i2c_addr) )
+    if ( !display.init(reset_gpio, oled, i2c_addr, i2c_bus) )
       return false;
   }
 
