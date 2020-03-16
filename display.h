@@ -28,7 +28,6 @@
 #include "ArduiPi_OLED_lib.h"
 #include "Adafruit_GFX.h"
 #include "ArduiPi_OLED.h"
-
 #include "display_info.h"
 
 #include <string>
@@ -39,7 +38,7 @@ int draw_spectrum(ArduiPi_OLED &display, int x_start, int y_start, int width,
     int height, const spect_graph &spect);
 
 // Draw mpd state
-void draw_mpd_state(ArduiPi_OLED &display, const display_info &disp_info, int x$
+void draw_mpd_state(ArduiPi_OLED &display, const display_info &disp_info, int x_start, int y_start,
     int width, int height, enum mpd_state state = MPD_STATE_UNKNOWN);
 
 // Draw moOde logo
