@@ -399,11 +399,16 @@ void draw_clock(ArduiPi_OLED &display, const display_info &disp_info)
 }
 
 
-void draw_spect_display(ArduiPi_OLED &display, const display_info &disp_info)
+void draw_spect_display(ArduiPi_OLED &display, const display_info &disp_info, enum mpd_state state)
 {
   const int H = 8;  // character height
   const int W = 6;  // character width
-  draw_spectrum(display, 0, 0, SPECT_WIDTH, 32, disp_info.spect);
+
+  if(state == MPD_STATE_PLAY)
+    draw_spectrum(display, 0, 0, SPECT_WIDTH, 32, disp_info.spect);
+  else
+    draw_mpd_state(display, disp_info, 0, 0, SPECT_WIDTH, 32, state);
+
   draw_connection(display, 128-2*W, 0, disp_info.conn);
   draw_triangle_slider(display, 128-5*W, 1, 11, 6, disp_info.status.get_volume());
   if (disp_info.status.get_kbitrate() > 0)
@@ -429,11 +434,12 @@ void draw_spect_display(ArduiPi_OLED &display, const display_info &disp_info)
 
 void draw_display(ArduiPi_OLED &display, const display_info &disp_info)
 {
-  if (disp_info.status.get_state() == MPD_STATE_UNKNOWN ||
-      disp_info.status.get_state() == MPD_STATE_STOP)
+  if (disp_info.status.get_state() == MPD_STATE_UNKNOWN)
+    draw_moode_logo(display);
+  else if (disp_info.status.get_state() == MPD_STATE_STOP)
     draw_clock(display, disp_info);
   else
-    draw_spect_display(display, disp_info);
+    draw_spect_display(display, disp_info, disp_info.status.get_state());
 }
 
 namespace {

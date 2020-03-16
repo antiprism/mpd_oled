@@ -38,6 +38,13 @@
 int draw_spectrum(ArduiPi_OLED &display, int x_start, int y_start, int width,
     int height, const spect_graph &spect);
 
+// Draw mpd state
+void draw_mpd_state(ArduiPi_OLED &display, const display_info &disp_info, int x$
+    int width, int height, enum mpd_state state = MPD_STATE_UNKNOWN);
+
+// Draw moOde logo
+void draw_moode_logo(ArduiPi_OLED &display);
+
 // Draw time HH:MM, according to what - 0: 24h leading 0, 1: 24h no leading 0
 //                                      2: 24h leading 0, 3: 24h no leading 0
 void draw_time(ArduiPi_OLED &display, int start_x, int start_y, int sz,
@@ -64,11 +71,11 @@ void draw_triangle_slider(ArduiPi_OLED &display, int x_start, int y_start,
 
 // Draw text
 void draw_text(ArduiPi_OLED &display, int x_start, int y_start, int max_len,
-    std::string str);
+    std::string str, int sz=1);
   
 // Draw text and scroll in box
 void draw_text_scroll(ArduiPi_OLED &display, int x_start, int y_start,
-    int max_len, std::string str, std::vector<double> scroll, double secs=0.0);
+    int max_len, std::string str, std::vector<double> scroll, double secs=0.0, int sz=1);
   
 
 bool init_display(ArduiPi_OLED &display, int oled, unsigned char i2c_addr,
