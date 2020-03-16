@@ -425,8 +425,9 @@ int mpd_info::init()
       fclose(file);
 
       // If current song file state isn't set, then set to 'play'
-      if (using_current_song_file && state == MPD_STATE_UNKNOWN)
-         state = MPD_STATE_PLAY;
+      // Commented out to show moode logo
+      //if (using_current_song_file && state == MPD_STATE_UNKNOWN)
+      //   state = MPD_STATE_PLAY;
     }
   }
 #endif // MOODE
