@@ -34,7 +34,7 @@ is connected.
 
 ### I2C
 I use a cheap 4 pin I2C SSH1106 display with a Raspberry Pi Zero. It is
-[wired like this](http://www.raspberrypirobotics.com/wp-content/uploads/2018/09/Interfacing-circuit-diagram-of-OLED-Display-with-Raspberry-Pi.png).
+[wired like this](https://www.14core.com/wp-content/uploads/2016/11/Raspberry-Pi-2-OLED_Screen-WIring-Diagram-Monocrome-I2C.jpg).
 In /boot/config.txt I have the line `dtparam=i2c_arm=on`.
 In /etc/modules I have the line `i2c-dev`.
 
@@ -50,7 +50,7 @@ Restart the Pi after making any system configuration changes.
 
 ### SPI
 I use a cheap 7 pin SPI SSH1106 display with a Raspberry Pi Zero. It is
-[wired like this](http://www.raspberrypirobotics.com/wp-content/uploads/2018/03/Interfacing-OLED-Display-with-Raspberry-Pi-circuit-hardware.jpg).
+[wired like this](https://www.14core.com/wp-content/uploads/2016/11/Raspberry-Pi-2-OLED_Screen-WIring-Diagram-Monocrome-SPI.jpg).
 In /boot/userconfig.txt (or use /boot/config.txt for Volumio versions before
 2.673) I have the line `dtparam=spi=on`.
 
