@@ -356,7 +356,7 @@ boolean ArduiPi_OLED::select_oled(uint8_t OLED_TYPE, int8_t i2c_addr)
 
 // initializer for SPI - we indicate the pins used and OLED type
 //
-boolean ArduiPi_OLED::init(int8_t DC, int8_t RST, int8_t CS, uint8_t OLED_TYPE) 
+boolean ArduiPi_OLED::init_spi(int8_t DC, int8_t RST, int8_t CS, uint8_t OLED_TYPE)
 {
   rst = RST;  // Reset Pin
   dc = DC;    // Data / command Pin
@@ -385,7 +385,7 @@ boolean ArduiPi_OLED::init(int8_t DC, int8_t RST, int8_t CS, uint8_t OLED_TYPE)
 }
 
 // initializer for I2C - we only indicate the reset pin and OLED type !
-boolean ArduiPi_OLED::init(int8_t RST, uint8_t OLED_TYPE, int8_t i2c_addr,
+boolean ArduiPi_OLED::init_i2c(int8_t RST, uint8_t OLED_TYPE, int8_t i2c_addr,
     int i2c_bus)
 {
   dc = cs = -1; // DC and chip Select do not exist in I2C

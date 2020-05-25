@@ -231,13 +231,13 @@ bool init_display(ArduiPi_OLED &display, int oled, unsigned char i2c_addr,
 {
   if (display.oled_is_spi_proto(oled)) {
     // SPI change parameters to fit to your LCD
-    if ( !display.init(spi_dc_gpio, reset_gpio, spi_cs, oled) )
+    if ( !display.init_spi(spi_dc_gpio, reset_gpio, spi_cs, oled) )
       return false;
     bcm2835_spi_set_speed_hz(1e6); // ~1MHz
   }
   else {
     // I2C change parameters to fit to your LCD
-    if ( !display.init(reset_gpio, oled, i2c_addr, i2c_bus) )
+    if ( !display.init_i2c(reset_gpio, oled, i2c_addr, i2c_bus) )
       return false;
   }
 
