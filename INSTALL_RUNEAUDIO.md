@@ -38,8 +38,7 @@ Restart the Pi after making any system configuration changes.
 ### SPI
 I use a cheap 7 pin SPI SSH1106 display with a Raspberry Pi Zero. It is
 [wired like this](wiring_spi.png).
-In /boot/userconfig.txt (or use /boot/config.txt for Volumio versions before
-2.673) I have the line `dtparam=spi=on`.
+In /boot/config.txt I have the line `dtparam=spi=on`.
 
 Restart the Pi after making any system configuration changes.
 
