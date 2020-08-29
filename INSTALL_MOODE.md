@@ -129,6 +129,8 @@ of 20Hz is
 ```
 sudo ./mpd_oled -o 6 -b 10 -g 1 -f 20
 ```
+The program can be stopped by pressing Control-C.
+
 For I2C OLEDs (mpd_oled -o 3, 4 or 6) you may need to specify the I2C address,
 find this by running,
 e.g. `sudo i2cdetect -y 1` and specify the address with mpd_oled -a,
