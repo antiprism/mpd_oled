@@ -180,6 +180,9 @@ string get_volumio_status()
   // Follow HTTP redirects if necessary.
   curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
 
+  // Volumio needs a non-null User-Agent
+  curl_easy_setopt(curl, CURLOPT_USERAGENT, "curl/7.38.0");
+
   // Hook up data handling function.
   curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, callback);
 
