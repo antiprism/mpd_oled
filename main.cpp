@@ -441,7 +441,7 @@ void draw_spect_display(ArduiPi_OLED &display, const display_info &disp_info)
 
 void draw_display(ArduiPi_OLED &display, const display_info &disp_info)
 {
-  auto state = disp_info.status.get_state();
+  mpd_state state = disp_info.status.get_state();
   if (state == MPD_STATE_UNKNOWN || state == MPD_STATE_STOP ||
       (state == MPD_STATE_PAUSE && disp_info.pause_screen == 's'))
     draw_clock(display, disp_info);
