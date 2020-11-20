@@ -356,6 +356,9 @@ void OledOpts::process_command_line(int argc, char **argv)
     }
   }
 
+  if (argc - optind > 0)
+    error(msg_str("invalid option or parameter: '%s'", argv[optind]));
+
   if (oled == 0)
     error("must specify a 128x64 oled", 'o');
 
