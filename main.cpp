@@ -523,17 +523,28 @@ int start_idle_loop(ArduiPi_OLED &display, FILE *fifo_file,
     timeout.tv_usec = select_usec;  // slightly longer than timer
 
 
-    // If there is data read it, otherwise use zero data.
-
+    // If there is data read it all.
     int num_bars_read = 0;
-    if(select(FD_SETSIZE, &set, NULL, NULL, &timeout) > 0)
-      num_bars_read = fread(&disp_info.spect.heights[0], sizeof(unsigned char),
-          disp_info.spect.heights.size(), fifo_file);
-    else {
+    if(select(FD_SETSIZE, &set, NULL, NULL, &timeout) > 0) {
+      do {
+        num_bars_read =
+		fread(&disp_info.spect.heights[0], sizeof(unsigned char),
+                      disp_info.spect.heights.size(), fifo_file);
+
+        FD_ZERO(&set);
+        FD_SET(fifo_fd, &set);
+        timeout.tv_sec = 0;
+        timeout.tv_usec = 0;
+      } while (select(FD_SETSIZE, &set, NULL, NULL, &timeout) > 0);
+    }
+
+    // Clear spectrum data if no data read or music not playing
+    if(num_bars_read == 0 || disp_info.status.get_state() != MPD_STATE_PLAY) {
       std::fill(disp_info.spect.heights.begin(), disp_info.spect.heights.end(),
           0);
       usleep(0.1 * 1000000);  // 0.1 sec delay, don't idle too fast if no need
     }
+
     // Update display if necessary
     if (timer.finished() || num_bars_read) {
        display.clearDisplay();
