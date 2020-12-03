@@ -35,16 +35,17 @@ is connected.
 ### I2C
 I use a cheap 4 pin I2C SSH1106 display with a Raspberry Pi Zero. It is
 [wired like this](wiring_i2c.png).
-In /boot/config.txt I have the line `dtparam=i2c_arm=on`.
-In /etc/modules I have the line `i2c-dev`.
+In /etc/modules I have the line `i2c-dev` (included by default).
+In /boot/config.txt I have the line `dtparam=i2c_arm=on` (included by default).
 
 The I2C bus speed on your system may be too slow for a reasonable screen
-refresh. Set a higher bus speed by adding the following line to
+refresh. Set a higher bus speed by adding the line
+`dtparam=i2c_arm_baudrate=400000` to
 /boot/userconfig.txt (or use /boot/config.txt for Volumio versions before
 2.673), or try a higher value for a higher screen refresh (I use 800000 with a
 25 FPS screen refresh)
 ```
-dtparam=i2c_arm_baudrate=400000
+sudo nano /boot/userconfig.txt
 ```
 Restart the Pi after making any system configuration changes.
 
@@ -53,7 +54,9 @@ I use a cheap 7 pin SPI SSH1106 display with a Raspberry Pi Zero. It is
 [wired like this](wiring_spi.png).
 In /boot/userconfig.txt (or use /boot/config.txt for Volumio versions before
 2.673) I have the line `dtparam=spi=on`.
-
+```
+sudo nano /boot/userconfig.txt
+```
 Restart the Pi after making any system configuration changes.
 
 ### Configure copy of audio

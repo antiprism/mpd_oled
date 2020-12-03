@@ -23,23 +23,29 @@ is connected.
 ### I2C
 I use a cheap 4 pin I2C SSH1106 display with a Raspberry Pi Zero. It is
 [wired like this](wiring_i2c.png).
-In /boot/config.txt I have the line `dtparam=i2c_arm=on`.
 In /etc/modules I have the line `i2c-dev`.
+```
+sudo nano etc/modules
+```
 
+In /boot/config.txt I have the line `dtparam=i2c_arm=on`.
 The I2C bus speed on your system may be too slow for a reasonable screen
-refresh. Set a higher bus speed by adding the following line to
+refresh. Set a higher bus speed by adding
+the following line `dtparam=i2c_arm_baudrate=400000` to
 /boot/config.txt, or try a higher value for a higher screen
 refresh (I use 800000 with a 25 FPS screen refresh)
 ```
-dtparam=i2c_arm_baudrate=400000
+sudo nano /boot/config.txt
 ```
-Restart the Pi after making any system configuration changes.
+Restart the Pi after making any system configuration c
 
 ### SPI
 I use a cheap 7 pin SPI SSH1106 display with a Raspberry Pi Zero. It is
 [wired like this](wiring_spi.png).
 In /boot/config.txt I have the line `dtparam=spi=on`.
-
+```
+sudo nano /boot/config.txt
+```
 Restart the Pi after making any system configuration changes.
 
 ### Set time zone

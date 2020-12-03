@@ -1,13 +1,14 @@
 # Install instructions for Moode
 
-These instructions are compatible with Moode 6 (and Moode 5) using a
-32-bit kernel architecture.
+These instructions are compatible with Moode 7 and 6 (and Moode 5 later versions)
+using a 32-bit kernel architecture.
 
 ## Base system
 
 Install [Moode](http://moodeaudio.org/). Ensure a command line prompt is
-available for entering the commands below (e.g. use SSH, default username
-'pi', default password 'moodeaudio')
+available for entering the commands below (e.g. use SSH, enable in the Moode UI
+at **Configure / System / Local Services / SSH term server**, log in with
+default username 'pi', default password 'moodeaudio').
 
 ## Build and install cava
 
@@ -35,15 +36,20 @@ is connected.
 ### I2C
 I use a cheap 4 pin I2C SSH1106 display with a Raspberry Pi Zero. It is
 [wired like this](wiring_i2c.png).
-In /boot/config.txt I have the line `dtparam=i2c_arm=on`.
-In /etc/modules I have the line `i2c-dev`.
 
+In /etc/modules I have the line `i2c-dev`
+```
+sudo nano /etc/modules
+```
+
+In /boot/config.txt I have the line `dtparam=i2c_arm=on`.
 The I2C bus speed on your system may be too slow for a reasonable screen
-refresh. Set a higher bus speed by adding the following line to
+refresh. Set a higher bus speed by adding
+the following line `dtparam=i2c_arm_baudrate=400000` to
 /boot/config.txt, or try a higher value for a higher screen
 refresh (I use 800000 with a 25 FPS screen refresh)
 ```
-dtparam=i2c_arm_baudrate=400000
+sudo nano /boot/config.txt
 ```
 Restart the Pi after making any system configuration changes.
 
@@ -51,7 +57,9 @@ Restart the Pi after making any system configuration changes.
 I use a cheap 7 pin SPI SSH1106 display with a Raspberry Pi Zero. It is
 [wired like this](wiring_spi.png).
 In /boot/config.txt I have the line `dtparam=spi=on`.
-
+```
+sudo nano /boot/config.txt
+```
 Restart the Pi after making any system configuration changes.
 
 
@@ -66,12 +74,21 @@ Clone the source repository and change to the source directory
 git clone https://github.com/antiprism/mpd_oled
 cd mpd_oled
 ```
+*The next instructions configure MPD to make a*
+*copy of its output to a named pipe.*
+*This works reliably, but has two disadvantages: the configuration*
+*involves patching Moode, which may inhibit Moode upgrades; the spectrum*
+*only works when the audio is played through MPD, like music files,*
+*web radio and DLNA streaming. Creating a copy of the audio for all*
+*audio sources is harder, and may be unreliable -- see the thread on*
+*[using mpd_oled with Spotify and Airplay](https://github.com/antiprism/mpd_oled/issues/4)*
 
-The MPD audio output needs to be copied to a named pipe, where Cava can
+The MPD audio output will be copied to a named pipe, where Cava can
 read it and calculate the spectrum. This is configured in /etc/mpd.conf.
 However, Moode regenerates this file, and also disables all but a single MPD
 output, in response to various events, and so the Moode code must be changed.
-The current version, Moode 6, includes technical measures to disallow
+
+**Moode 6 only:** Moode 6 includes technical measures to disallow
 code changes; run the following commands to disable them
 ```
 sqlite3 /var/local/www/db/moode-sqlite3.db "DROP TRIGGER ro_columns"
@@ -79,28 +96,44 @@ sqlite3 /var/local/www/db/moode-sqlite3.db "UPDATE cfg_hash SET ACTION = 'warnin
 sqlite3 /var/local/www/db/moode-sqlite3.db "UPDATE cfg_hash SET ACTION = 'warning' WHERE PARAM = '/var/www/inc/playerlib.php'"
 ```
 
-The following commands copy the FIFO configuration file to
-/usr/local/etc/mpd_oled_fifo.conf and patch the Moode source code. (Note 1:
+Carrying on for Moode 6 and 7, copy the FIFO configuration file to
+/usr/local/etc/mpd_oled_fifo.conf
+```
+sudo cp mpd_oled_fifo.conf /usr/local/etc/
+```
+
+Patch the Moode source code. (Note 1:
 a Moode system update may overwrite the patched code, in which case, repeat
 the next instructions, and possibly also the previous instructions.
 Note 2: if, for any reason, regeneration of
 /etc/mpd.conf has been disabled (for example, if it has been set immutable)
 then edit the file directly and append the contents of mpd_oled_fifo.conf.)
-(for older versions Moode, 6.4.0 and earlier, in the second command below
-specify the patch file moode_mpd_fifo_old.patch).
 
+Run **just one** of the following three patch commands, depending on your
+Moode version.
+
+Patch Moode 7 (do not run this on Moode 6)
 ```
-sudo cp mpd_oled_fifo.conf /usr/local/etc/
-sudo patch -d/ -p0 -N < moode_mpd_fifo.patch
+sudo patch -d/ -p0 -N < moode7_mpd_fifo.patch  # Patch Moode 7
 ```
 
-Enable the Moode metadata file
+Patch Moode 6.5 and later (do not run this on Moode 7)
+```
+sudo patch -d/ -p0 -N < moode6_mpd_fifo.patch  # Patch Moode 6.5 and later
+```
+
+Patch Moode 6.4 and earlier (may work on Moode 5, later versions)
+```
+sudo patch -d/ -p0 -N < moode_old_mpd_fifo.patch  # Patch Moode 6.4 and earlier
+```
+
+Now, enable the Moode metadata file
 ```
 sqlite3 /var/local/www/db/moode-sqlite3.db "update cfg_system set value=1 where param='extmeta'" && mpc add ""
 
 ```
-Go to the Moode UI and set your timezone at "Moode" / "Configure" / "System",
-then (essential) reboot the machine.
+Go to the Moode UI and set your timezone at **Moode / Configure / System**,
+then (essential) **reboot the machine**.
 
 Log back into the machine and change to the mpd_oled source directory, e.g.
 ```

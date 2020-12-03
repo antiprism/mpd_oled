@@ -1,0 +1,33 @@
+diff -Naru /var/www/command/worker.php www/command/worker.php
+--- /var/www/command/worker.php	2020-11-20 14:48:56.249909913 +0100
++++ www/command/worker.php	2020-12-02 09:17:14.378234093 +0100
+@@ -404,6 +404,7 @@
+ workerLog('worker: Configure MPD outputs');
+ $mpdoutput = configMpdOutputs();
+ sysCmd('mpc enable only ' . $mpdoutput);
++sysCmd('mpc enable mpd_oled_FIFO');  // Added by mpd_oled
+ setMpdHttpd();
+ // Report mpd outputs
+ sendMpdCmd($sock, 'outputs');
+diff -Naru /var/www/inc/playerlib.php www/inc/playerlib.php
+--- /var/www/inc/playerlib.php	2020-11-20 15:04:33.251091715 +0100
++++ www/inc/playerlib.php	2020-12-02 09:28:23.553388684 +0100
+@@ -225,6 +225,8 @@
+ }
+ 
+ function integrityCheck() {
++	return 'passed';  // Added by mpd_oled
++
+ 	$warning = false;
+ 
+ 	// Export device table
+@@ -2048,6 +2050,9 @@
+ 	$data .= "always_on \"yes\"\n";
+ 	$data .= "}\n\n";
+ 
++	// Added by mpd_oled
++	$data .= file_get_contents('/usr/local/etc/mpd_oled_fifo.conf');
++
+ 	if ($_SESSION['feat_bitmask'] & FEAT_DEVTWEAKS) {
+ 		$fh = fopen('/etc/mpd.moode.conf', 'w');
+ 		fwrite($fh, $data);
