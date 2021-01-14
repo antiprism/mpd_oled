@@ -398,39 +398,60 @@ int mpd_info::init()
   // On Moode, rather than MPD an alternative renderer may be playing audio.
   // If this is the case, detailed song information will not be available,
   // so determine and display the renderer name instead.
+  // Also, use for origin and title
 
   const char *MOODE_CURRENT_SONG_FILE = "/var/local/www/currentsong.txt";
-  // Check for MPD not playing or paused
-  if (!ret || !(state == MPD_STATE_PLAY || state == MPD_STATE_PAUSE)) {
-    FILE *file = fopen(MOODE_CURRENT_SONG_FILE, "r");
-    if (file != NULL) {
-      init_vals();
-      int line_sz = 256;  // lines of interest will be shorter than this
-      char line[line_sz];
-      char renderer_name[line_sz];
-      char state_name[line_sz];
-      bool using_current_song_file = false;
-      while (fgets(line, line_sz - 1, file)) {
-        using_current_song_file = true;
-        renderer_name[0] = '\0';  // set to null string
-        sscanf(line, "file=%[^\n]", renderer_name); // read string to newline
-        if (renderer_name[0] != '\0') {
-          origin = renderer_name; // display the render as the song origin
-          state = MPD_STATE_PLAY;
-        }
-        state_name[0] = '\0';  // set to null string
-        sscanf(line, "state=%[^\n]", state_name); // read string to newline
-        if (state_name[0] != '\0') {
-          if(strcmp(state_name, "stop") == 0)
-             state = MPD_STATE_STOP;
-        }
+  FILE *file = fopen(MOODE_CURRENT_SONG_FILE, "r");
+  if (file != NULL) {
+    int line_sz = 256;  // lines of interest will be shorter than this
+    char line[line_sz];
+   
+    char file_name[line_sz] = {0};
+    char artist_name[line_sz] = {0};
+    char album_name[line_sz] = {0};
+    char title_name[line_sz] = {0};
+    char buff[line_sz];
+    
+    bool has_title = false;
+    bool is_radio = false;
+    bool using_current_song_file = false;
+    while (fgets(line, line_sz - 1, file)) {
+      using_current_song_file = true;
+      if (sscanf(line, "file=%[^\n]", buff) == 1)
+        strcpy(file_name, buff);
+      else if (sscanf(line, "artist=%[^\n]", buff) == 1)
+        strcpy(artist_name, buff);
+      else if (sscanf(line, "album=%[^\n]", buff) == 1)
+        strcpy(album_name, buff);
+      else if (sscanf(line, "title=%[^\n]", buff) == 1) {
+        strcpy(title_name, buff);
+	has_title = true;
       }
-      fclose(file);
-
-      // If current song file state isn't set, then set to 'play'
-      if (using_current_song_file && state == MPD_STATE_UNKNOWN)
-         state = MPD_STATE_PLAY;
+      else if (sscanf(line, "artist=%[^\n]", buff) == 1) 
+        strcpy(artist_name, buff);
+      else if (sscanf(line, "state=%[^\n]", buff) == 1) {
+        if(strcmp(buff, "stop") == 0)
+          state = MPD_STATE_STOP;
+      }
     }
+    fclose(file);
+
+    if(!has_title) {  // assume this is a renderer
+      init_vals();
+      origin = file_name; // display the renderer as the song origin
+      state = MPD_STATE_PLAY;
+    }
+    else {
+      if (strcmp("Radio station", artist_name) == 0)
+        origin = album_name;
+      else
+        origin = artist_name;
+      title = title_name;
+    }
+
+    // If current song file state isn't set, then set to 'play'
+    if (using_current_song_file && state == MPD_STATE_UNKNOWN)
+      state = MPD_STATE_PLAY;
   }
 #endif // MOODE
 
