@@ -566,7 +566,7 @@ int start_idle_loop(ArduiPi_OLED &display, FILE *fifo_file,
 int main(int argc, char **argv)
 {
   // Set locale to allow iconv transliteration to US-ASCII
-  setlocale(LC_CTYPE, "en_US.UTF-8");
+  setlocale(LC_CTYPE, "C.UTF-8");
   OledOpts opts;
   opts.process_command_line(argc, argv);
 

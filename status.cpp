@@ -342,7 +342,7 @@ void mpd_info::set_vals_mpd(struct mpd_connection *conn)
 
   struct mpd_song *song;
   if ((song = mpd_recv_song(conn)) != NULL) {
-    title = get_tag(song, MPD_TAG_TITLE);
+    title = to_ascii(get_tag(song, MPD_TAG_TITLE));
 
     // Where does the song come from, just one choice
     enum mpd_tag_type origin_tags[] = {
@@ -350,7 +350,7 @@ void mpd_info::set_vals_mpd(struct mpd_connection *conn)
       MPD_TAG_COMPOSER, MPD_TAG_PERFORMER, MPD_TAG_UNKNOWN };
     int i = 0;
     while (origin_tags[i] != MPD_TAG_UNKNOWN) {
-      origin = get_tag(song, origin_tags[i]);
+      origin = to_ascii(get_tag(song, origin_tags[i]));
       if (origin.size())
         break;
       i++;
@@ -443,10 +443,10 @@ int mpd_info::init()
     }
     else {
       if (strcmp("Radio station", artist_name) == 0)
-        origin = album_name;
+        origin = to_ascii(album_name);
       else
-        origin = artist_name;
-      title = title_name;
+        origin = to_ascii(artist_name);
+      title = to_ascii(title_name);
     }
 
     // If current song file state isn't set, then set to 'play'
