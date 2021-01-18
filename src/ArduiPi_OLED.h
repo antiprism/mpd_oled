@@ -149,9 +149,9 @@ public:
   // I2C Init
   boolean init_i2c(int8_t RST, uint8_t OLED_TYPE, int8_t i2c_addr, int i2c_bus);
 
-  boolean
-  oled_is_spi_proto(uint8_t OLED_TYPE); /* to know protocol before /init */
-  boolean select_oled(uint8_t OLED_TYPE, int8_t i2c_addr = 0);
+  boolean oled_is_spi_proto(uint8_t OLED_TYPE); /* to know protocol before /init */
+  boolean select_oled(uint8_t OLED_TYPE, int8_t i2c_addr=0) ;
+  void reset_offset();
 
   void begin(void);
   void close(void);

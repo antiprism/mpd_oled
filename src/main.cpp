@@ -553,16 +553,18 @@ int start_idle_loop(ArduiPi_OLED &display, FILE *fifo_file,
 
     // Update display if necessary
     if (timer.finished() || num_bars_read) {
-      display.clearDisplay();
-      pthread_mutex_lock(&disp_info_lock);
-      display.invertDisplay(get_invert(opts.invert));
-      draw_display(display, disp_info);
-      pthread_mutex_unlock(&disp_info_lock);
-      display.display();
+       display.clearDisplay();
+       pthread_mutex_lock(&disp_info_lock);
+       display.invertDisplay(get_invert(opts.invert));
+       draw_display(display, disp_info);
+       pthread_mutex_unlock(&disp_info_lock);
+       display.display();
     }
 
-    if (timer.finished())
+    if (timer.finished()) {
+      display.reset_offset();
       timer.set_timer(update_sec); // Reset the timer
+    }
   }
 
   return 0;

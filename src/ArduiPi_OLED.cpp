@@ -419,6 +419,11 @@ void ArduiPi_OLED::close(void)
   bcm2835_close();
 }
 
+void ArduiPi_OLED::reset_offset()
+{
+  sendCommand(SSD1306_Set_Display_Offset, 0x00);        // no offset
+}
+
 void ArduiPi_OLED::begin(void)
 {
   uint8_t multiplex;
