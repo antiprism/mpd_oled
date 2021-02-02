@@ -1,0 +1,11 @@
+ *** Http tiny library & command line program  package ***  release 1.2
+(c) 1998 Laurent Demailly       -  see LICENSE
+(c) 1996 Observatoire de Paris
+Author(s): Laurent Demailly <L@Demailly.com> - http://www.demailly.com/~dl/
+
+Downloaded from: https://github.com/ldemailly/http-tiny
+
+Modified by Adrian Rossiter <adrian@antiprism.com> 11/11/2019:
+- Change license to Artistic License 2.0 (with permission from
+  Laurent Demailly)
+- Compile with C++. Wrap in class to remove global variables.

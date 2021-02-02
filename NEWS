@@ -1,0 +1,12 @@
+Version 0.02
+01-02-21 Adrian Rossiter <adrian@antiprism.com>
+         Changes
+           initialise with current mpd_oled code
+           use autotools, remove OS specific conditional code, remove
+           some dependencies (include hjson-cpp and http_tiny)
+
+Version 0.01
+23-04-19 Adrian Rossiter <adrian@antiprism.com>
+         Changes
+           First release. Adapted from vol_oled to work with
+           more player systems.

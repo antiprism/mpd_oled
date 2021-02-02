@@ -1,0 +1,26 @@
+#Moode
+
+# configure system mpd_oled install on Moode
+CPPFLAGS="-W -Wall -Wno-psabi" ./configure
+# configure system cava install on Moode (as mpd_oled_cava)
+CPPFLAGS="-W -Wall -Wno-psabi" ./configure --disable-input-portaudio --disable-input-sndio --disable-output-ncurses --disable-input-pulse --program-prefix=mpd_oled_
+
+
+# configure local mpd_oled install on Moode
+CXX=g++ CC=gcc CPPFLAGS="-march=armv6 -mfpu=vfp -W -Wall -Wno-psabi" ./configure --prefix="/home/pi/inst"
+# configure local cava install on Moode (as mpd_oled_cava)
+CXX=g++ CC=gcc CPPFLAGS="-march=armv6 -mfpu=vfp -W -Wall -Wno-psabi" ./configure --prefix="/home/pi/inst" --disable-input-portaudio --disable-input-sndio --disable-output-ncurses --disable-input-pulse --program-prefix=mpd_oled_
+
+
+#Volumio
+
+# configure system mpd_oled install on Volumio
+CPPFLAGS="-W -Wall -Wno-psabi" ./configure
+# configure system cava install on Volumio (as mpd_oled_cava)
+CPPFLAGS="-W -Wall -Wno-psabi" ./configure --disable-input-portaudio --disable-input-sndio --disable-output-ncurses --disable-input-pulse --program-prefix=mpd_oled_ 
+
+# configure local mpd_oled install on Volumio
+CXX=g++ CC=gcc CPPFLAGS="-march=armv6 -mfpu=vfp -W -Wall -Wno-psabi" ./configure --prefix="/home/volumio/inst"
+# configure local cava install on Volumio (as mpd_oled_cava)
+CXX=g++ CC=gcc CPPFLAGS="-march=armv6 -mfpu=vfp -W -Wall -Wno-psabi" ./configure --prefix="/home/volumio/inst" --disable-input-portaudio --disable-input-sndio --disable-output-ncurses --disable-input-pulse --program-prefix=mpd_oled_ 
+

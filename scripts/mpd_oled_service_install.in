@@ -1,0 +1,20 @@
+#!/bin/bash
+
+service="mpd_oled"
+
+tmp_file_name="/tmp/$service.service"
+tmp_file_contents="[Unit]
+Description=MPD OLED Display
+
+[Service]
+ExecStart=@prefix@/bin/$service -o 0 -b 21 -g 1 -f 15
+
+[Install]
+WantedBy=multi-user.target
+"
+echo "$tmp_file_contents" > $tmp_file_name
+
+systemctl is-active --quiet $service && systemctl stop $service
+cp -n $tmp_file_name /etc/systemd/system
+systemctl daemon-reload
+systemctl enable $service

@@ -1,0 +1,3 @@
+#! /bin/sh
+# autoreconf -v -i -I m4 -W all,no-cross
+autoreconf -v -i -I m4 -W all

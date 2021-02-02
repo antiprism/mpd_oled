@@ -1,0 +1,18 @@
+#!/bin/bash
+
+# script file used to create /etc/mpd.conf
+script_file="/srv/http/bash/mpd-conf.sh"
+
+# check before removing mpd_oled section
+if grep -q "/tmp/mpd_oled_fifo" "$script_file"; then
+
+  sed -i '/#oled0/,/#oled1/ d' $script_file
+
+  # regenerate /etc/mpd.conf
+  /srv/http/bash/mpd-conf.sh
+
+else
+
+  echo "script that generates mpd.conf does not include a section for mpd_oled"
+
+fi

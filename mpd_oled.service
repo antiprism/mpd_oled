@@ -1,8 +1,0 @@
-[Unit]
-Description=MPD OLED Display
-
-[Service]
-ExecStart=/usr/local/bin/mpd_oled -o 6 -b 21 -g 1 -f 15
-
-[Install]
-WantedBy=multi-user.target

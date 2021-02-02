@@ -1,0 +1,31 @@
+#!/bin/bash
+
+# script file used to create /etc/mpd.conf
+script_file="/srv/http/bash/mpd-conf.sh"
+
+# check before adding mpd_oled section
+if grep -q "/tmp/mpd_oled_fifo" "$script_file"; then
+
+  echo "script that generates mpd.conf aready includes a section for mpd_oled"
+
+else
+
+  sed -i '/mpdconf+=\$btoutput/ a\
+#oled0\
+mpdconf+='\''\
+\
+audio_output {\
+	type           "fifo"\
+	name           "mpd_oled_FIFO"\
+	path           "/tmp/mpd_oled_fifo"\
+	format         "44100:16:2"\
+}\
+'\''\
+#oled1
+' /srv/http/bash/mpd-conf.sh
+
+  # regenerate /etc/mpd.conf
+  /srv/http/bash/mpd-conf.sh
+
+fi
+

@@ -1,0 +1,8 @@
+#!/bin/bash
+
+rm /usr/local/bin/mpd_oled*
+
+sysd_file="/etc/systemd/system/mpd_oled.service"
+if test -f "$sysd_file" && grep -q "/usr/local/" "$sysd_file"; then
+  sed -i "s!/usr/local/!/usr/!" "$sysd_file"
+fi
