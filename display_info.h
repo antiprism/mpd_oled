@@ -45,6 +45,7 @@ struct display_info
   Counter text_change;
   std::vector<double> scroll;
   int clock_format;
+  int date_format;
   char pause_screen;
   connection_info conn;
   void conn_init() { conn.init(); }

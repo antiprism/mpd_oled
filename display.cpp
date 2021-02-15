@@ -92,7 +92,8 @@ void draw_time(ArduiPi_OLED &display, int start_x, int start_y, int sz,
 
 
 // Draw date - DD-MM-YYYY
-void draw_date(ArduiPi_OLED &display, int start_x, int start_y, int sz)
+void draw_date(ArduiPi_OLED &display, int start_x, int start_y, int sz,
+    int date_format)
 {
   display.setTextColor(WHITE);
 
@@ -100,7 +101,10 @@ void draw_date(ArduiPi_OLED &display, int start_x, int start_y, int sz)
   struct tm *now = localtime(&t);
   const size_t STR_SZ = 32;
   char str[STR_SZ];
-  strftime(str, STR_SZ, "%d-%m-%Y", now);
+  if(date_format == 1)  // MM-DD-YYYY
+     strftime(str, STR_SZ, "%m-%d-%Y", now);
+  else                  // DD-MM-YYYY
+     strftime(str, STR_SZ, "%d-%m-%Y", now);
 
   display.setCursor(start_x, start_y);
   display.setTextSize(sz);

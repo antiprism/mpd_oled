@@ -44,7 +44,8 @@ void draw_time(ArduiPi_OLED &display, int start_x, int start_y, int sz,
     int clock_format);
 
 // Fraw date - DD-MM-YYYY
-void draw_date(ArduiPi_OLED &display, int start_x, int start_y, int sz);
+void draw_date(ArduiPi_OLED &display, int start_x, int start_y, int sz,
+    int date_format);
 
     // Draw a connection indicator, 12x8
 void draw_connection(ArduiPi_OLED &display, int x_start, int y_start,

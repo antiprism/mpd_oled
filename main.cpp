@@ -100,6 +100,7 @@ public:
   int gap;                        // gap between bars, in pixels
   vector<double> scroll;          // rate (pixels per sec), start delay (secs)
   int clock_format;               // 0-3: 0,1 - 24h  2,3 - 12h  0,2 - leading 0
+  int date_format;                // 0: DD-MM-YYYY, 1: MM-DD-YYYY
   char pause_screen;              // p - play, s - stop
   string cava_method;             // fifo, alsa or pulse
   string cava_source;             // Path to FIFO for audio-in, alsa device...
@@ -120,6 +121,7 @@ public:
       bars(16),
       gap(1),
       clock_format(0),
+      date_format(0),
       pause_screen('p'),
       cava_method("fifo"),
       cava_source("/tmp/mpd_oled_fifo"),
@@ -178,6 +180,7 @@ void OledOpts::usage()
 "                rate_title,delay_title,rate_artist,delay_artist\n"
 "  -C <fmt>   clock format: 0 - 24h leading 0 (default), 1 - 24h no leading 0,\n"
 "                2 - 24h leading 0, 3 - 24h no leading 0\n"
+"  -d         use USA date format MM-DD-YYYY (default: DD-MM-YYYY)\n"
 "  -P <val>   pause screen type: p - play (default), s - stop\n"
 "  -c         cava input method and source (default: '%s,%s')\n"
 "             e.g. 'fifo,/tmp/my_fifo', 'alsa,hw:5,0', 'pulse'\n"
@@ -207,7 +210,7 @@ void OledOpts::process_command_line(int argc, char **argv)
 
   handle_long_opts(argc, argv);
 
-  while ((c=getopt(argc, argv, ":ho:b:g:f:s:C:P:c:RI:a:B:r:D:S:")) != -1) {
+  while ((c=getopt(argc, argv, ":ho:b:g:f:s:C:dP:c:RI:a:B:r:D:S:")) != -1) {
     if (common_opts(c, optopt))
       continue;
 
@@ -265,6 +268,10 @@ void OledOpts::process_command_line(int argc, char **argv)
       print_status_or_exit(read_int(optarg, &clock_format), c);
       if(clock_format < 0 || clock_format > 3)
         error("clock format number is not 0, 1, 2 or 3", c);
+      break;
+
+    case 'd':
+      date_format = 1;
       break;
 
     case 'P':
@@ -410,7 +417,7 @@ void draw_clock(ArduiPi_OLED &display, const display_info &disp_info)
   draw_text(display, 22, 0, 16, disp_info.conn.get_ip_addr());
   draw_connection(display, 128-2*W, 0, disp_info.conn);
   draw_time(display, 4, 16, 4, disp_info.clock_format);
-  draw_date(display, 32, 56, 1);
+  draw_date(display, 32, 56, 1, disp_info.date_format);
 }
 
 
@@ -493,6 +500,7 @@ int start_idle_loop(ArduiPi_OLED &display, FILE *fifo_file,
   display_info disp_info;
   disp_info.scroll = opts.scroll;
   disp_info.clock_format = opts.clock_format;
+  disp_info.date_format = opts.date_format;
   disp_info.pause_screen = opts.pause_screen;
   disp_info.spect.init(opts.bars, opts.gap);
   disp_info.status.set_source(opts.source);
