@@ -9,37 +9,44 @@ SSD1309, SH1106 or SSH1106 controller.
 
 ## Install
 
-A binary installation package is provided for Moode and Volumio, and is
-the quickest and easiest way to install mpd_oled on these systems.
-All other systems should install from source code.
+A binary installation package is provided for Moode, Volumio and rAudio,
+and is the quickest and easiest way to install mpd_oled on these systems.
+All other systems should install from source code (Note: the build
+commands take a long time to run on a Pi Zero).
 
-### Install mpd_oled from a package
+### Moode
 
-This is the recommendeded installation method for Moode, Volumio
-and rAudio. Follow the instructions for your player
-
-* [Install mpd_oled package on Volumio 2](doc/install_volumio2_deb.md)
-* [Install mpd_oled package on Moode 7](doc/install_moode7_deb.md)
-* [Install mpd_oled package on Moode 6](doc/install_moode6_deb.md)
-* [Install mpd_oled package on rAudio 1](doc/install_raudio1_zst.md)
-
-
-### Install mpd_oled from source code
-
-This is the installation method if no package is available for your
-player, of if you prefer to build from source. Follow the instructions
-for your player
-
-* [Install mpd_oled from source on Volumio 2](doc/install_volumio2_source.md)
+* [Install mpd_oled binary package on Moode 7](doc/install_moode7_deb.md)
+* [Install mpd_oled binary package on Moode 6](doc/install_moode6_deb.md)
 * [Install mpd_oled from source on Moode 7](doc/install_moode7_source.md)
 * [Install mpd_oled from source on Moode 6](doc/install_moode6_source.md)
+
+### Volumio
+
+* [Install mpd_oled binary package on Volumio 2](doc/install_volumio2_deb.md)
+* [Install mpd_oled from source on Volumio 2](doc/install_volumio2_source.md)
+
+Another alternative is
+[Mase's mpd_oled plugin for Volumio](https://github.com/supercrab/volumio-plugins/tree/master/plugins/miscellanea/mpd_oled)
+(external project). The plugin installs mpd_oled and and allows
+it to be configured through the Volumio UI.
+
+### rAudio
+
+* [Install mpd_oled binary package on rAudio 1](doc/install_raudio1_zst.md)
 * [Install mpd_oled from source on rAudio 1](doc/install_raudio1.md)
-* Build and install on Debian-based OS running MPD: follow the instructions
-  for [Install mpd_oled from source on Volumio 2](doc/install_volumio2_source.md)
+
+### Other OS
+
+* Debian-based OS running MPD: follow the instructions to
+  [Install mpd_oled from source on Volumio 2](doc/install_volumio2_source.md)
+  but configure a copy of the audio by editing /etc/mpd.conf directly and
+  appending the contents of `/usr/local/share/mp_oled/mpd_oled_fifo.conf`.
+* Arch-based OS running MPD: follow the instructions to
+  [Install mpd_oled from source on rAudio 1](doc/install_raudio1_source.md)
   but configure a copy of the audio by editing /etc/mpd.conf directly and
   appending the contents of `/usr/local/share/mp_oled/mpd_oled_fifo.conf`.
 
-Note: the build commands take a long time to run on a Pi Zero.
 
 ## Program Help and Options
 
@@ -69,6 +76,7 @@ Options
                 rate_title,delay_title,rate_artist,delay_artist
   -C <fmt>   clock format: 0 - 24h leading 0 (default), 1 - 24h no leading 0,
                 2 - 24h leading 0, 3 - 24h no leading 0
+  -d         use USA date format MM-DD-YYYY (default: DD-MM-YYYY)
   -P <val>   pause screen type: p - play (default), s - stop
   -k         cava executable name is cava (default: mpd_oled_cava)
   -c         cava input method and source (default: 'fifo,/tmp/mpd_oled_fifo')
