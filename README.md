@@ -28,7 +28,7 @@ commands take a long time to run on a Pi Zero).
 
 Another alternative is
 [Mase's mpd_oled plugin for Volumio](https://github.com/supercrab/volumio-plugins/tree/master/plugins/miscellanea/mpd_oled)
-(external project). The plugin installs mpd_oled and and allows
+(external project). The plugin installs mpd_oled and allows
 it to be configured through the Volumio UI.
 
 ### rAudio

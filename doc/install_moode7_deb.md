@@ -90,7 +90,7 @@ enable this audio copy.
 
 Copy the FIFO configuration file to /usr/local/etc/mpd_oled_fifo.conf
 ```
-sudo cp /usr/local/share/mpd_oled/mpd_oled_fifo.conf /usr/local/etc/
+sudo cp /usr/share/mpd_oled/mpd_oled_fifo.conf /usr/local/etc/
 ```
 
 Patch the Moode source code. (Note: you may be able undo the patch and return
@@ -98,7 +98,7 @@ to the original Moode code by running the same command but with an extra -R
 option i.e. `patch -R -d/...`, you could do this before a Moode update and
 then run the original patch command again after the update).
 ```
-sudo patch -d/ -p0 -N < /usr/local/share/mpd_oled/moode/moode7_mpd_fifo.patch  # Patch Moode 7
+sudo patch -d/ -p0 -N < /usr/share/mpd_oled/moode/moode7_mpd_fifo.patch  # Patch Moode 7
 ```
 
 **Essential: reboot the machine**.

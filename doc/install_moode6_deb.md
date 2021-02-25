@@ -99,7 +99,7 @@ sqlite3 /var/local/www/db/moode-sqlite3.db "UPDATE cfg_hash SET ACTION = 'warnin
 
 Copy the FIFO configuration file to /usr/local/etc/mpd_oled_fifo.conf
 ```
-sudo cp /usr/local/share/mpd_oled/mpd_oled_fifo.conf /usr/local/etc/
+sudo cp /usr/share/mpd_oled/mpd_oled_fifo.conf /usr/local/etc/
 ```
 
 Patch the Moode source code.
@@ -109,12 +109,12 @@ Moode version.
 
 Patch Moode 6.5 and later
 ```
-sudo patch -d/ -p0 -N < /usr/local/share/mp_oled/moode6_mpd_fifo.patch  # Patch Moode 6.5 and later
+sudo patch -d/ -p0 -N < /usr/share/mp_oled/moode6_mpd_fifo.patch  # Patch Moode 6.5 and later
 ```
 
 Patch Moode 6.4 and earlier (may work on Moode 5, later versions)
 ```
-sudo patch -d/ -p0 -N < /usr/local/share/mp_oled/moode_old_mpd_fifo.patch  # Patch Moode 6.4 and earlier
+sudo patch -d/ -p0 -N < /usr/share/mp_oled/moode_old_mpd_fifo.patch  # Patch Moode 6.4 and earlier
 ```
 (for Moode 5, restart MPD now by going to the Moode UI Audio Config page and
 clicking on "RESTART" in the MPD section).
