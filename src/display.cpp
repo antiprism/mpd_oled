@@ -103,6 +103,8 @@ void draw_date(ArduiPi_OLED &display, int start_x, int start_y, int sz,
   char str[STR_SZ];
   if (date_format == 1) // MM-DD-YYYY
     strftime(str, STR_SZ, "%m-%d-%Y", now);
+  else if (date_format == 2) // dd-Mmm-YYYY
+    strftime(str, STR_SZ, "%d-%b-%Y", now);
   else // DD-MM-YYYY
     strftime(str, STR_SZ, "%d-%m-%Y", now);
   display.setCursor(start_x, start_y);

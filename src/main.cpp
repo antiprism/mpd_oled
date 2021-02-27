@@ -159,7 +159,8 @@ Options
                 rate_title,delay_title,rate_artist,delay_artist
   -C <fmt>   clock format: 0 - 24h leading 0 (default), 1 - 24h no leading 0,
                 2 - 24h leading 0, 3 - 24h no leading 0
-  -d         use USA date format MM-DD-YYYY (default: DD-MM-YYYY)
+  -d <val>   use alternate date format
+                0 - (default) DD-MM-YYYY, 1 - MM-DD-YYYY, 2 - dd-Mmm-YYYY
   -P <val>   pause screen type: p - play (default), s - stop
   -k         cava executable name is cava (default: mpd_oled_cava)
   -c         cava input method and source (default: '%s,%s')
@@ -189,7 +190,7 @@ void OledOpts::process_command_line(int argc, char **argv)
 
   handle_long_opts(argc, argv);
 
-  while ((c = getopt(argc, argv, ":ho:b:g:f:s:C:dP:kc:RI:a:B:r:D:S:p:")) != -1) {
+  while ((c = getopt(argc, argv, ":ho:b:g:f:s:C:d:P:kc:RI:a:B:r:D:S:p:")) != -1) {
     if (common_opts(c, optopt))
       continue;
 
@@ -250,7 +251,9 @@ void OledOpts::process_command_line(int argc, char **argv)
       break;
 
     case 'd':
-      date_format = 1;
+      print_status_or_exit(read_int(optarg, &date_format), c);
+      if (date_format < 0 || date_format > 2)
+        error("date format number is not 0, 1 or 2", c);
       break;
 
     case 'P':
