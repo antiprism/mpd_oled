@@ -492,7 +492,7 @@ int start_idle_loop(ArduiPi_OLED &display, FILE *fifo_file,
   const double update_sec =
       1 / (0.9 * opts.framerate); // default update freq just under framerate
   const long select_usec =
-      update_sec * 1001000; // slightly longer, but still less than framerate
+      update_sec * 1100000; // slightly longer, but still less than framerate
   int fifo_fd = fileno(fifo_file);
   Timer timer;
 
