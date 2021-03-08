@@ -1,10 +1,11 @@
-# Install instructions for rAudio 1 (RuneAudio fork)
+# Install instructions for rAudio 1 (RuneAudio fork) on a Pi Zerp
 
 These instructions are for installing mpd_oled with a binary package on
-rAudio 1.
+rAudio 1 on a Pi Zero.
 
-The binary package should be the best option for most people, but if you
-would like to build and install the current mpd_oled repository code then see
+The binary package should be the best option for most people on a Pi Zero,
+but if you have a different Pi model or would like to build and install
+the current mpd_oled repository code then see
 [Install instructions for rAudio 1 using source](install_raudio1_source.md).
 
 ## Base system

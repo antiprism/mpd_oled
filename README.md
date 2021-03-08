@@ -33,8 +33,11 @@ it to be configured through the Volumio UI.
 
 ### rAudio
 
-* [Install mpd_oled binary package on rAudio 1](doc/install_raudio1_zst.md)
 * [Install mpd_oled from source on rAudio 1](doc/install_raudio1.md)
+
+A binary package is provided for the Pi Zero only
+
+* [Install mpd_oled binary package for Pi Zero on rAudio 1](doc/install_raudio1_zst.md)
 
 ### Other OS
 
