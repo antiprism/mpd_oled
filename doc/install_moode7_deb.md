@@ -73,6 +73,11 @@ Go to the Moode UI and set your timezone at **Moode / Configure / System**.
 You may wish to [test the display](#configure-mpd_oled) before
 following the next instructions.
 
+*UPDATE FOR MOODE 7.1* it is no longer possible to configure MPD
+to make a copy of the audio using the instructions below. For now,
+use this [ALSA method](https://github.com/antiprism/mpd_oled/issues/65)
+and use the issue thread give some feedback.
+
 *The next instruction configures MPD to make a copy of its output to a*
 *named pipe, where Cava can read it and calculate the spectrum.*
 *This works reliably, but has two disadvantages: the configuration*
