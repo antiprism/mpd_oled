@@ -38,6 +38,9 @@ bin_SCRIPTS = \
 	scripts/mpd_oled_service_install \
 	scripts/mpd_oled_service_edit \
 	scripts/mpd_oled_service_uninstall \
+	scripts/mpd_oled_moode_audio_copy_install \
+	scripts/mpd_oled_moode_audio_copy_uninstall \
+	scripts/mpd_oled_moode_audio_copy_report \
 	scripts/mpd_oled_volumio_mpd_conf_install \
 	scripts/mpd_oled_volumio_mpd_conf_uninstall \
 	scripts/mpd_oled_raudio_mpd_conf_install \

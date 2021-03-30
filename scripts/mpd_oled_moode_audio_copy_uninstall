@@ -1,0 +1,55 @@
+#!/bin/bash
+
+# tags
+tag_start="# MPD_OLED_START_TAG: DO NOT CHANGE THIS LINE"
+tag_end="# MPD_OLED_END_TAG: DO NOT CHANGE THIS LINE"
+
+# configuration files
+file_modules_conf="/etc/modules"                    # load ALSA loopback module
+file_aloop_options="/etc/modprobe.d/alsa-base.conf" # options for ALSA loopback
+file_alsa_conf="/etc/asound.conf"                   # ALSA configuration
+
+# text to be appended to the corresponding configuration files
+text_modules_conf="snd-aloop"
+text_aloop_options="options snd-aloop index=-2"
+
+
+# ###############################################################
+# Check the configuration files
+# Only update the file if no existing compatible configuration is found
+
+
+# ALSA Configuration
+echo
+echo "Process $file_alsa_conf"
+echo "checking for mpd_oled configuration, matching lines found..."
+if grep "$tag_start" "$file_alsa_conf"; then
+	echo "removing mpd_oled section (copy original to $file_alsa_conf.bak)..."
+   # Remove everything between, and including, the mpd_oled start and end tags
+   sed -i.bak "/$tag_start/,/$tag_end/d" $file_alsa_conf
+else
+  echo "none"
+  echo "warning: $file_alsa_conf does not include any mpd_oled configuration: no changes applied"
+fi
+echo "finished processing $file_alsa_conf"
+
+echo
+echo "Finished processing all files."
+echo
+echo "Note: the ALSA loopback module (snd-aloop) loading and options are"
+echo "not modified or removed by this script, in case they are being used"
+echo "by other software. If, for some reason, you wish to remove them manually"
+echo "then edit $file_modules_conf and remove the line 'snd-aloop', and edit"
+echo "$file_aloop_options and remove the line starting 'options snd-aloop'."
+echo
+echo "Complete the configuration changes with the following steps"
+echo
+echo "1. reboot the machine"
+echo
+echo "2. optional: disable the graphic equaliser"
+echo
+echo "3. optional: if you are stll using mpd_oled, change option -c to use"
+echo "   a diffeent source for the audio copy"
+echo
+
+exit 0

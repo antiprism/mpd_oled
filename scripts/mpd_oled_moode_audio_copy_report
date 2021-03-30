@@ -1,0 +1,47 @@
+#!/bin/bash
+
+echo "==========================================================="
+echo "Audio Copy Report for mpd_oled"
+echo "==========================================================="
+echo "aplay -l"
+echo "--------"
+aplay -l
+
+echo "==========================================================="
+echo "aplay -L"
+echo "--------"
+aplay -L
+
+echo "==========================================================="
+echo "mpc outputs"
+echo "-----------"
+mpc outputs
+
+echo "==========================================================="
+echo "cat /etc/asound.conf"
+echo "--------------------"
+cat /etc/asound.conf
+
+echo
+echo "==========================================================="
+echo "cat /etc/modules"
+echo "----------------"
+cat /etc/modules
+
+echo "==========================================================="
+echo "cat /etc/modprobe.d/alsa-base.conf"
+echo "----------------------------------"
+cat /etc/modprobe.d/alsa-base.conf
+
+echo "==========================================================="
+echo "cat /var/local/www/currentsong.txt"
+echo "----------------------------------"
+cat /var/local/www/currentsong.txt
+
+echo "==========================================================="
+echo "ps ax | grep mpd_oled"
+echo "---------------------"
+ps ax | grep mpd_oled
+echo "==========================================================="
+
+exit 0

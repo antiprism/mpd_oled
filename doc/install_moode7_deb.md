@@ -61,7 +61,9 @@ sudo bash mpd_oled_moode_install_latest.sh
 ## Configure song status and time zone
 
 Enable the Moode metadata file, which includes information about the
-current song
+current song. You can either do this in the Moode UI at
+**Moode / Configure / System / Local Services / Metadata file**,
+or by running the following command
 ```
 sqlite3 /var/local/www/db/moode-sqlite3.db "update cfg_system set value=1 where param='extmeta'" && mpc add ""
 
@@ -70,48 +72,50 @@ Go to the Moode UI and set your timezone at **Moode / Configure / System**.
 
 ## Configure a copy of the playing audio for the spectrum display
 
-You may wish to [test the display](#configure-mpd_oled) before
-following the next instructions.
+The audio copy will be made using an ALSA configuration. To enable
+this configuration a graphic equalizer **must** be set (in the Moode UI).
 
-*UPDATE FOR MOODE 7.1* it is no longer possible to configure MPD
-to make a copy of the audio using the instructions below. For now,
-use this [ALSA method](https://github.com/antiprism/mpd_oled/issues/65)
-and use the issue thread give some feedback.
-
-*The next instruction configures MPD to make a copy of its output to a*
-*named pipe, where Cava can read it and calculate the spectrum.*
-*This works reliably, but has two disadvantages: the configuration*
-*involves patching Moode, which may inhibit Moode upgrades; the spectrum*
-*only works when the audio is played through MPD (like music files,*
-*web radio and DLNA streaming). Creating a copy of the audio for all*
-*audio sources is harder, and may be unreliable -- see the thread on*
-*[using mpd_oled with Spotify and Airplay](https://github.com/antiprism/mpd_oled/issues/4)*
-
-Configure MPD to copy its audio output to a named pipe. This is normally
-configured in /etc/mpd.conf, but Moode regenerates this file, and also
-disables all but a single MPD output, in response to various events. The
-following commands therefore change the Moode code to persistently
-enable this audio copy.
-
-Copy the FIFO configuration file to /usr/local/etc/mpd_oled_fifo.conf
+Install the audio copy with
 ```
-sudo cp /usr/share/mpd_oled/mpd_oled_fifo.conf /usr/local/etc/
+sudo mpd_oled_moode_audio_copy_install
 ```
+Read the report that is printed. If you already have a similar configuration
+in `/etc/asound.conf` it will *not* be overwritten, and you may need to delete
+it first and rerun the command (or leave it if it is already working).
 
-Patch the Moode source code. (Note: you may be able undo the patch and return
-to the original Moode code by running the same command but with an extra -R
-option i.e. `patch -R -d/...`, you could do this before a Moode update and
-then run the original patch command again after the update).
+If the installation completed successfully (or is assumed to be compatible
+with mpd_oled) then reboot the machine
 ```
-sudo patch -d/ -p0 -N < /usr/share/mpd_oled/moode/moode7_mpd_fifo.patch  # Patch Moode 7
+sudo reboot
 ```
+When it has rebooted, open the Moode UI and enable a graphic equaliser
+(e.g.  Graphic Eq with the 'flat' setting) if one is not already set.
 
-**Essential: reboot the machine**.
+An audio copy should now be available to read from `hw:Loopback,1` (see below).
 
-## Configure mpd_oled
+Note 1: enabling the loopback device may change the card number of your
+playback device. If you hear no audio then reselect your device in the Moode UI.
+
+Note 2: some Moode settings (e.g. certain SoX settings) may be incompatible
+with the graphic equaliser, and therefore produce an ALSA error when
+the equaliser is enabled. If you need these settings then you will need
+to customise the ALSA configuration.
+
+Please report issues, or ask for help with the spectrum display not working, at
+[Moode ALSA audio copy issues](https://github.com/antiprism/mpd_oled/issues/65).
+
+## Configure mpd_oled and set to run at boot
 
 *Note: The program can be run without the audio copy enabled, in*
 *which case the spectrum analyser area will be blank*
+
+The mpd_oled program can be run with `sudo mpd_oled_service_edit` (plus
+options), and this also sets up mpd_oled with the same options as a service
+to be run at boot. Rerunning `sudo mpd_oled_service_edit` with different
+options will stop the current running mpd_oled and start it again with
+the new options. (Test commands can also be run with `mpd_oled` (plus
+options), and stopped with Ctrl-C, but ensure that no other copy of
+mpd_oled is running).
 
 The OLED type MUST be specified with -o from the following list:
     1 - Adafruit (SSD1306, SSD1309) SPI 128x64,
@@ -124,7 +128,7 @@ An example command, for a generic I2C SH1106 display (OLED type 6) with
 a display of 10 bars and a gap of 1 pixel between bars and a framerate
 of 20Hz is
 ```
-sudo mpd_oled_service_edit -o 6 -b 10 -g 1 -f 20
+sudo mpd_oled_service_edit -o 6 -b 10 -g 1 -f 20 -c alsa,hw:Loopback,1
 ```
 
 **For I2C OLEDs** (mpd_oled -o 3, 4 or 6) you may need to specify the I2C
@@ -171,6 +175,7 @@ sudo systemctl status mpd_oled    # report the status of the service
 
 Uninstall with
 ```
+sudo mpd_oled_moode_audio_copy_uninstall
 sudo apt remove mpd-oled
 ```
 

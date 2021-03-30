@@ -1,0 +1,158 @@
+#!/bin/bash
+
+# tags
+tag_start="# MPD_OLED_START_TAG: DO NOT CHANGE THIS LINE"
+tag_end="# MPD_OLED_END_TAG: DO NOT CHANGE THIS LINE"
+
+# configuration files
+file_modules_conf="/etc/modules"                    # load ALSA loopback module
+file_aloop_options="/etc/modprobe.d/alsa-base.conf" # options for ALSA loopback
+file_alsa_conf="/etc/asound.conf"                   # ALSA configuration
+
+# text to be appended to the corresponding configuration files
+text_modules_conf="snd-aloop"
+text_aloop_options="options snd-aloop index=-2"
+text_alsa_conf="$tag_start
+pcm.!eqfa12p {
+    type copy
+    slave.pcm "\""eqfa12p_and_copy"\""
+}
+
+pcm.eqfa12p_and_copy {
+    type plug
+    slave.pcm {
+        type multi
+        slaves {
+            a { channels 2 pcm "\""plug_eqfa12p"\"" }       # the original output
+            b { channels 2 pcm "\""plughw:Loopback,0"\"" }  # the loopback driver
+        }
+        bindings {
+            0 { slave a channel 0 }
+            1 { slave a channel 1 }
+            2 { slave b channel 0 }
+            3 { slave b channel 1 }
+        }
+    }
+    ttable [
+        [ 1 0 1 0 ]   # left  -> a.left,  b.left
+        [ 0 1 0 1 ]   # right -> a.right, b.right
+    ]
+}
+
+pcm.!alsaequal {
+    type copy
+    slave.pcm "\""alsaequal_and_copy"\""
+}
+
+pcm.alsaequal_and_copy {
+    type plug
+    slave.pcm {
+        type multi
+        slaves {
+            a { channels 2 pcm "\""plug_alsaequal"\"" }     # the original output
+            b { channels 2 pcm "\""plughw:Loopback,0"\"" }  # the loopback driver
+        }
+        bindings {
+            0 { slave a channel 0 }
+            1 { slave a channel 1 }
+            2 { slave b channel 0 }
+            3 { slave b channel 1 }
+        }
+    }
+    ttable [
+        [ 1 0 1 0 ]   # left  -> a.left,  b.left
+        [ 0 1 0 1 ]   # right -> a.right, b.right
+    ]
+}
+$tag_end"
+
+#Flags
+updated_modules_conf="no"
+updated_aloop_options="no"
+updated_alsa_conf="no"
+
+
+
+# ###############################################################
+# Check the configuration files
+# Only update the file if no existing compatible configuration is found
+
+# ALSA Loopback module loading
+
+echo
+echo "Process $file_modules_conf"
+echo "checking for ALSA loopback (snd-aloop) loading, matching lines found..."
+if grep "^[[:blank:]]*snd-aloop" "$file_modules_conf"; then
+  echo "warning: $file_modules_conf already loads snd-aloop: no changes applied"
+else
+  echo "none"
+  echo "appending configuration..."
+  echo "$text_modules_conf" >> "$file_modules_conf"
+  updated_modules_conf="yes"
+fi
+echo "finished processing $file_modules_conf"
+
+# ALSA Loopback module options
+echo
+echo "Process $file_aloop_options"
+echo "checking for ALSA loopback (snd-aloop) options, matching lines found..."
+if grep "^[[:blank:]]*options[[:blank:]]\+snd-aloop" "$file_aloop_options"; then
+  echo "warning: $file_aloop_options already includes snd_aloop options: no changes applied"
+else
+  echo "none"
+  echo "appending configuration..."
+  echo "$text_aloop_options" >> "$file_aloop_options"
+  updated_aloop_options="yes"
+fi
+echo "finished processing $file_aloop_options"
+
+# ALSA Configuration
+echo
+echo "Process $file_alsa_conf"
+echo "checking for mpd_oled configuration, matching lines found..."
+if grep "^$tag_start" "$file_alsa_conf"; then
+  echo "warning: $file_alsa_conf already includes mpd_oled configuration: no changes applied"
+else
+  echo "none"
+  # the mpd_tag is not present, check that the Graphic Equaliser plugins
+  # haven't been overloaded, as would indicate a custom configuration that
+  # should not be changed
+  echo "checking for existing ALSA overrides for 'alsaequal' or 'eqfa12p', matching lines found..."
+  if grep "^pcm.!eqfa12p\|^pcm.!alsaequal" "$file_alsa_conf"; then
+    echo "warning: $file_alsa_conf includes ALSA overides for 'alsaequal' or eqfa12p: no changes applied"
+  else
+    echo "none"
+    echo "appending configuration..."
+    echo "$text_alsa_conf" >> "$file_alsa_conf"
+    updated_alsa_conf="yes"
+  fi
+fi
+echo "finished processing $file_alsa_conf"
+echo
+
+if test x"$updated_modules_conf" = x"yes" && test x"$updated_aloop_options" = x"yes" && test x"$updated_alsa_conf" = x"yes"; then
+  echo "RESULT: Installation completed successfully"
+else
+  echo "RESULT: Installation completed without updating all files."
+  echo "This indicates an existing or previous ALSA configuration, which"
+  echo "could be for mpd_oled, but could also be for some other application"
+  echo "or plugin. Review the preceding warnings and and check the"
+  echo "corresponding files for compatibility with mpd_oled, or just carry"
+  echo "on with the final steps of the configuration and see if the mpd_oled"
+  echo "spectrum is working correctly."
+fi
+
+echo
+echo "If the installation completed successfully (or is assumed to be"
+echo "compatible with mpd_oled), complete the configuration with the"
+echo "following steps"
+echo
+echo "1. reboot the machine"
+echo
+echo "2. open the Moode UI and enable a graphic equaliser (e.g."
+echo "   Graphic Eq with the 'flat' setting"
+echo
+echo "3. run mpd_oled with the option '-c alsa,hw:Loopback,1'"
+echo
+
+exit 0
