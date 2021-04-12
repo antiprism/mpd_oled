@@ -1,0 +1,25 @@
+#!/bin/bash
+
+sysname="unknown"
+
+moodeutl_path="/usr/local/bin/moodeutl"
+volumio_path="/volumio"
+raudio_path="/srv/http/command/rune_shutdown"
+
+if test -f "$moodeutl_path" ; then
+   sysname="moode"
+   until ps -C mpd > /dev/null; do
+      sleep 10
+   done
+elif test -f "$volumio_path" ; then
+     sysname="volumio"
+     until ps -C mpd > /dev/null; do
+        sleep 10
+     done
+elif test -f "$raudio_path" ; then
+     sysname="raudio"
+     until ps -C mpd > /dev/null; do
+        sleep 10
+     done
+fi
+

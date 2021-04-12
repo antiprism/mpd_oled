@@ -1,12 +1,14 @@
 #!/bin/bash
 
 service="mpd_oled"
+launch_test="mpd_oled_launch_test"
 
 tmp_file_name="/tmp/$service.service"
 tmp_file_contents="[Unit]
 Description=MPD OLED Display
 
 [Service]
+ExecStartPre=@prefix@/bin/$launch_test
 ExecStart=@prefix@/bin/$service -o 0 -b 21 -g 1 -f 15
 
 [Install]
