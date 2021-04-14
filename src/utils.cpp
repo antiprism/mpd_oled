@@ -197,12 +197,27 @@ int split_line(char *line, vector<char *> &parts, const char *delims,
   return parts.size();
 }
 
+// https://stackoverflow.com/questions/2342162/stdstring-formatting-
+// like-sprintf/49812018#49812018
 string msg_str(const char *fmt, ...)
 {
-  const int MSG_SZ = 256;
-  char message[MSG_SZ];
-  va_list args;
-  va_start(args, fmt);
-  vsnprintf(message, MSG_SZ - 1, fmt, args);
-  return message;
+  // initialize use of the variable argument array
+  va_list ap;
+  va_start(ap, fmt);
+
+  // reliably acquire the size
+  // from a copy of the variable argument array
+  // and a functionally reliable call to mock the formatting
+  va_list ap_copy;
+  va_copy(ap_copy, ap);
+  const int len = vsnprintf(NULL, 0, fmt, ap_copy);
+  va_end(ap_copy);
+
+  // return a formatted string without risking memory mismanagement
+  // and without assuming any compiler or platform specific behavior
+  vector<char> vstr(len + 1);
+  vsnprintf(vstr.data(), vstr.size(), fmt, ap);
+  va_end(ap);
+  return string(vstr.data(), len);
 }
+

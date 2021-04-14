@@ -22,6 +22,10 @@
   IN THE SOFTWARE.
 */
 
+
+#include "u8x8_d_sdl.h"
+
+#include "controller.h"
 #include "display.h"
 #include "display_info.h"
 #include "player.h"
@@ -48,15 +52,16 @@ using std::vector;
 
 const int SPECT_WIDTH = 64;
 
-ArduiPi_OLED display; // global, for use during signal handling
+U8G2 *p_u8g2 = nullptr;  // for use during signal handling
 
 void cleanup(void)
 {
   // Clear and close display
-  display.invertDisplay(false);
-  display.clearDisplay();
-  display.display();
-  display.close();
+  if(p_u8g2)
+    p_u8g2->clearDisplay();
+#ifdef ENABLE_SDL
+  SDL_Quit();
+#endif
 }
 
 void signal_handler(int sig)
@@ -68,7 +73,8 @@ void signal_handler(int sig)
     cleanup();
     break;
   }
-  abort();
+  exit(0);
+  //abort();
 }
 
 void init_signals(void)
@@ -95,7 +101,7 @@ class OledOpts : public ProgramOpts {
 public:
   const double DEF_SCROLL_RATE = 8;    // pixels per second
   const double DEF_SCROLL_DELAY = 5;   // second delay before scrolling
-  int oled = OLED_ADAFRUIT_SPI_128x32; // OLED type, as a number
+  string oled;                         // OLED type, as string
   int framerate = 15;                  // frame rate in Hz
   int bars = 16;                       // number of bars in spectrum
   int gap = 1;                         // gap between bars, in pixels
@@ -108,12 +114,6 @@ public:
   string cava_source;                      // Path to FIFO / alsa device
   double cava_start_delay = 2;   // delay (secs) after play before starting cava
   double invert = 0;             // 0 normal, -1 invert, n>0 invert every n hrs
-  bool rotate180 = false;        // display upside down
-  unsigned char i2c_addr = 0;    // number of I2C address
-  int i2c_bus = 1;               // number of I2C bus
-  int reset_gpio = 25;           // reset pin
-  int spi_dc_gpio = OLED_SPI_DC; // SPI DC
-  int spi_cs = OLED_SPI_CS0;     // SPI CS - 0: CS0, 1: CS1
   Player player;
 
   OledOpts() : ProgramOpts("mpd_oled", "0.02")
@@ -128,6 +128,7 @@ public:
   }
   void process_command_line(int argc, char **argv);
   void usage();
+  void print_oled_list();
 };
 
 void OledOpts::usage()
@@ -138,18 +139,12 @@ Usage: %s -o oled_type [options] [input_file]
 Display information about an MPD-based player on an OLED screen
 
 Options
-%s)",
-          get_program_name().c_str(), help_ver_text);
-
-  fprintf(
-      stdout,
-      "  -o <type>  OLED type, specified as a number, from the following:\n");
-  for (int i = 0; i < OLED_LAST_OLED; i++)
-    if (strstr(oled_type_str[i], "128x64"))
-      fprintf(stdout, "      %1d %s\n", i, oled_type_str[i]);
-
-  fprintf(stdout,
-          R"(  -b <num>   number of bars to display (default: 16)
+%s
+  -o <conf>  OLED configuration in form
+                CONTROLLER,MODEL,PROTOCOL[,opt1=val1,opt2=val2,...]
+             ('-o help' will print all supported OLEDs and their
+             configuration options)
+  -b <num>   number of bars to display (default: 16)
   -g <sz>    gap between bars in, pixels (default: 1)
   -f <hz>    framerate in Hz (default: 15)
   -s <vals>  scroll rate (pixels per second) and start delay (seconds), up
@@ -165,21 +160,14 @@ Options
   -k         cava executable name is cava (default: mpd_oled_cava)
   -c         cava input method and source (default: '%s,%s')
              e.g. 'fifo,/tmp/my_fifo', 'alsa,hw:5,0', 'pulse'
-  -R         rotate display 180 degrees
   -I <val>   invert black/white: n - normal (default), i - invert,
              number - switch between n and i with this period (hours), which
              may help avoid screen burn
-  -a <addr>  I2C address, in hex (default: default for OLED type)
-  -B num     I2C bus number (default: 1, giving device /dev/i2c-1)
-  -r <gpio>  I2C/SPI reset GPIO number, if needed (default: 25)
-  -D <gpio>  SPI DC GPIO number (default: 24)
-  -S <num>   SPI CS number (default: 0)
   -p <plyr>  Player: mpd, moode, volumio, runeaudio (default: detected)
-Example :
-%s -o 6 use a %s OLED
 )",
+          get_program_name().c_str(), help_ver_text,
           DEF_SCROLL_RATE, DEF_SCROLL_DELAY, cava_method.c_str(),
-          cava_source.c_str(), get_program_name().c_str(), oled_type_str[6]);
+          cava_source.c_str());
 }
 
 void OledOpts::process_command_line(int argc, char **argv)
@@ -190,17 +178,18 @@ void OledOpts::process_command_line(int argc, char **argv)
 
   handle_long_opts(argc, argv);
 
-  while ((c = getopt(argc, argv, ":ho:b:g:f:s:C:dP:kc:Z:RI:a:B:r:D:S:p:")) !=
-         -1) {
+  while ((c = getopt(argc, argv, ":ho:b:g:f:s:C:dP:kc:I:p:")) != -1) {
     if (common_opts(c, optopt))
       continue;
 
     switch (c) {
     case 'o':
-      print_status_or_exit(read_int(optarg, &oled), c);
-      if (oled < 0 || oled >= OLED_LAST_OLED ||
-          !strstr(oled_type_str[oled], "128x64"))
-        error(msg_str("invalid 128x64 oled type %d (see -h)", oled), c);
+      oled = optarg;
+      if (oled == "help") {
+         print_oled_list();
+         exit(0);
+      }
+
       break;
 
     case 'b':
@@ -294,16 +283,6 @@ void OledOpts::process_command_line(int argc, char **argv)
       cava_source = &optarg[method_len];
       break;
 
-    case 'Z':
-      print_status_or_exit(read_double(optarg, &cava_start_delay), c);
-      if (cava_start_delay < 0)
-        error("cava start delay cannot be negative", c);
-      break;
-
-    case 'R':
-      rotate180 = true;
-      break;
-
     case 'I':
       if (strcmp(optarg, "n") == 0)
         invert = 0;
@@ -315,41 +294,6 @@ void OledOpts::process_command_line(int argc, char **argv)
       }
       else
         error("invalid value, should be n, i or a positive number", c);
-      break;
-
-    case 'a':
-      if (strlen(optarg) != 2 || strspn(optarg, "01234567890aAbBcCdDeEfF") != 2)
-        error("I2C address should be two hexadecimal digits", c);
-
-      i2c_addr = (unsigned char)strtol(optarg, NULL, 16);
-      break;
-
-    case 'B':
-      print_status_or_exit(read_int(optarg, &i2c_bus), c);
-      if (i2c_bus < 0)
-        error("bus number cannot be negative", c);
-      break;
-
-    case 'r':
-      print_status_or_exit(read_int(optarg, &reset_gpio), c);
-      if (!isdigit(optarg[0]) || reset_gpio < 0 || reset_gpio > 99)
-        error("probably invalid (not integer in range 0 - 99), specify the\n"
-              "GPIO number of the pin that RST is connected to",
-              c);
-      break;
-
-    case 'D':
-      print_status_or_exit(read_int(optarg, &spi_dc_gpio), c);
-      if (!isdigit(optarg[0]) || reset_gpio < 0 || reset_gpio > 99)
-        error("probably invalid (not integer in range 0 - 99), specify the\n"
-              "GPIO number of the pin that SPI DC is connected to",
-              c);
-      break;
-
-    case 'S':
-      print_status_or_exit(read_int(optarg, &spi_cs), c);
-      if (spi_cs < 0 || spi_cs > 1)
-        error("SPI CS should be 0 or 1", c);
       break;
 
     case 'p': {
@@ -370,8 +314,8 @@ void OledOpts::process_command_line(int argc, char **argv)
   if (argc - optind > 0)
     error(msg_str("invalid option or parameter: '%s'", argv[optind]));
 
-  if (oled == 0)
-    error("must specify a 128x64 oled", 'o');
+  if (oled == "")
+    error("must specify an OLED type (-o list for a list)", 'o');
 
   const int min_spect_width = bars + (bars - 1) * gap; // assume bar width = 1
   if (min_spect_width > SPECT_WIDTH)
@@ -380,6 +324,84 @@ void OledOpts::process_command_line(int argc, char **argv)
         "requires a minimum width of %d. Reduce the number of bars and/or the "
         "gap\n",
         SPECT_WIDTH, bars, gap, min_spect_width));
+}
+
+void OledOpts::print_oled_list()
+{
+  printf(R"(
+CONTROLLER SETUP DETAILS
+
+  PROTOCOL KEY
+    I2C                    - I2C (alias of HW_I2C), HW_I2C, SW_I2C
+    SPI (4 wire SPI)       - SPI (alias of 4W_HW_SPI), 4W_HW_SPI, 4W_SW_SPI
+    3W_SW_SPI (3 wire SPI) - 3W_SW_SPI
+    8080                   - 8080
+
+)");
+
+  printf("  %-15s%-20s%s\n", "CONTROLLER", "MODEL", "PROTOCOLS");
+  printf("  %-15s%-20s%s\n", "----------", "-----", "---------");
+
+  auto setup = ControllerSetup::get_controllers();
+  for (auto &kp0 : setup) {
+    bool first_model = true;
+    printf("\n");
+    for (auto &kp1 : kp0.second) {
+      std::set<string> protocols;
+      for (auto &kp2 : kp1.second) {
+        auto com = kp2.first;
+        if (com == "I2C" || com == "HW_I2C" || com == "SW_I2C")
+          protocols.insert("aI2C");
+        else if (com == "SPI" || com == "4W_HW_SPI" || com == "4W_SW_SPI")
+          protocols.insert("bSPI");
+        else
+          protocols.insert("c" + com); // 3W_SW_SPI, 8080
+      }
+      string protos;
+      for (auto proto : protocols)
+        protos += proto.substr(1) + ",";
+      if (!protos.empty())
+        protos.pop_back();
+
+      fprintf(stderr, "  %-15s%-20s%s\n",
+              (first_model) ? kp0.first.c_str() : "", kp1.first.c_str(),
+              protos.c_str());
+      first_model = false;
+    }
+  }
+
+  printf("\nPROTOCOL OPTIONS\n\n");
+  printf("  I2C is an alias for HW_I2C, SPI is an alias for 4W_HW_SPI\n");
+  for (string com_str :
+       {"HW_I2C", "SW_I2C", "4W_HW_SPI", "4W_SW_SPI", "3W_SW_SPI", "8080"}) {
+    int com_id = ControllerSetup::get_com_id(com_str);
+    auto com_details = ControllerSetup::get_com_details(com_id);
+    printf("    %s - %s\n", com_str.c_str(), com_details->desc.c_str());
+    int cnt = 0;
+    for (auto val_ids :
+         {com_details->values_required, com_details->values_optional}) {
+      string str;
+
+      for (int val_id : val_ids) {
+        auto value_details = ControllerSetup::get_value_details(val_id);
+        str += value_details->id + ",";
+      }
+      if (!str.empty())
+        str.pop_back();
+      printf("      %s: %s\n", (cnt == 0) ? "required" : "optional",
+             str.c_str());
+      cnt++;
+    }
+  }
+
+  printf("\nPROTOCOL OPTION DESCRIPTIONS\n\n");
+  for (int val_id = 0; val_id < ControllerSetup::VAL_LAST; val_id++) {
+    auto value_details = ControllerSetup::get_value_details(val_id);
+    printf("  %-15s - %s\n", value_details->id.c_str(),
+           value_details->desc.c_str());
+  }
+
+  printf("\n");
 }
 
 string print_config_file(int bars, int framerate, string cava_method,
@@ -445,54 +467,52 @@ Status start_cava(FILE **p_fifo_file, const OledOpts &opts)
 }
 
 // Draw fullscreen 128x64 clock/date
-void draw_clock(ArduiPi_OLED &display, const display_info &disp_info)
+void draw_clock(U8G2 &u8g2, const display_info &disp_info)
 {
-  display.clearDisplay();
-  // const int H = 8;  // character height
-  const int W = 6; // character width
-  draw_text(display, 22, 0, 16, disp_info.conn.get_ip_addr());
-  draw_connection(display, 128 - 2 * W, 0, disp_info.conn);
-  draw_time(display, 4, 16, 4, disp_info.clock_format);
-  draw_date(display, 32, 56, 1, disp_info.date_format);
+  draw_text(u8g2, 22, 0, disp_info.conn.get_ip_addr(), u8g2_font_courB08_tf);
+  draw_connection(u8g2, 116, 0, disp_info.conn);
+  draw_time(u8g2, 10, 16, disp_info.clock_format, u8g_font_courB24);
+  draw_date(u8g2, 32, 52, disp_info.date_format, u8g_font_courB08);
 }
 
-void draw_spect_display(ArduiPi_OLED &display, const display_info &disp_info)
+void draw_spect_display(U8G2 &u8g2, const display_info &disp_info)
 {
-  const int H = 8; // character height
-  const int W = 6; // character width
-  draw_spectrum(display, 0, 0, SPECT_WIDTH, 32, disp_info.spect);
-  draw_connection(display, 128 - 2 * W, 0, disp_info.conn);
-  draw_triangle_slider(display, 128 - 5 * W, 1, 11, 6,
-                       disp_info.status.get_volume());
-  if (disp_info.status.get_kbitrate() > 0)
-    draw_text(display, 128 - 10 * W, 0, 4, disp_info.status.get_kbitrate_str());
+  draw_spectrum(u8g2, 0, 0, SPECT_WIDTH, 32, disp_info.spect);
+  draw_connection(u8g2, 116, 0, disp_info.conn);
+  draw_triangle_slider(u8g2, 100, 0, 12, 8, disp_info.status.get_volume());
 
+    //draw_text(u8g2, 68, 0, disp_info.status.get_kbitrate_str().c_str());
+  if (disp_info.status.get_kbitrate() > 0)
+    draw_text(u8g2, 68, 0, disp_info.status.get_kbitrate_str(), u8g_font_courB08);
+
+  u8g2.setMaxClipWindow();
   int clock_offset = (disp_info.clock_format < 2) ? 0 : -2;
-  draw_time(display, 128 - 10 * W + clock_offset, 2 * H, 2,
-            disp_info.clock_format);
+  draw_time(u8g2, 72 + clock_offset, 16, disp_info.clock_format,
+            u8g2_font_courB14_tf);
 
   vector<double> scroll_origin(disp_info.scroll.begin() + 2,
                                disp_info.scroll.begin() + 4);
-  draw_text_scroll(display, 0, 4 * H + 4, 20, disp_info.status.get_origin(),
-                   scroll_origin, disp_info.text_change.secs());
+  draw_text_scroll(u8g2, 0, 38, disp_info.status.get_origin(), scroll_origin,
+                   disp_info.text_change.secs(), u8g_font_courB08, 128, 10);
 
   vector<double> scroll_title(disp_info.scroll.begin(),
                               disp_info.scroll.begin() + 2);
-  draw_text_scroll(display, 0, 6 * H, 20, disp_info.status.get_title(),
-                   scroll_title, disp_info.text_change.secs());
+  draw_text_scroll(u8g2, 0, 46, disp_info.status.get_title(), scroll_title,
+                   disp_info.text_change.secs(), u8g_font_courB08, 128, 10);
 
-  draw_solid_slider(display, 0, 7 * H + 6, 128, 2,
+  draw_solid_slider(u8g2, 0, 56 + 6, 128, 2,
                     100 * disp_info.status.get_progress());
 }
 
-void draw_display(ArduiPi_OLED &display, const display_info &disp_info)
+void draw_display(U8G2 &u8g2, const display_info &disp_info)
 {
+  u8g2.setFontPosTop();
   mpd_state state = disp_info.status.get_state();
   if (state == MPD_STATE_UNKNOWN || state == MPD_STATE_STOP ||
       (state == MPD_STATE_PAUSE && disp_info.pause_screen == 's'))
-    draw_clock(display, disp_info);
+    draw_clock(u8g2, disp_info);
   else
-    draw_spect_display(display, disp_info);
+    draw_spect_display(u8g2, disp_info);
 }
 
 namespace {
@@ -524,8 +544,9 @@ bool get_invert(double period)
   return (period > 0) ? (fmod(time(0) / 3600.0, 2 * period) > period) : period;
 }
 
-int start_idle_loop(ArduiPi_OLED &display, const OledOpts &opts)
+int start_idle_loop(U8G2 *p_u8g2, const OledOpts &opts)
 {
+  auto &u8g2 = *p_u8g2;
   const double update_sec =
       1 / (0.9 * opts.framerate); // default update freq just under framerate
   const long select_usec =
@@ -595,20 +616,19 @@ int start_idle_loop(ArduiPi_OLED &display, const OledOpts &opts)
 
     // Update display if necessary
     if (timer.finished() || num_bars_read) {
-      display.clearDisplay();
+      u8g2.clearBuffer();
       pthread_mutex_lock(&disp_info_lock);
-      display.invertDisplay(get_invert(opts.invert));
-      draw_display(display, disp_info);
+      // u8g2.invertDisplay(get_invert(opts.invert));
+      draw_display(u8g2, disp_info);
       pthread_mutex_unlock(&disp_info_lock);
-      display.display();
+      u8g2.sendBuffer();
     }
 
     if (timer.finished()) {
-      display.reset_offset();
+      //u8g2.initDisplay();   // reset offset (but turns on power save)
+      //u8g2.setPowerSave(0); // turn off power save
       if (disp_info.status.get_state() == MPD_STATE_PLAY && fifo_fd < 0) {
-	system("cp /var/local/www/currentsong.txt /tmp/currentsong_before_sleep.txt");
         usleep(opts.cava_start_delay*1000000);
-	system("cp /var/local/www/currentsong.txt /tmp/currentsong_after_sleep.txt");
         opts.print_status_or_exit(start_cava(&fifo_file, opts));
         fifo_fd = fileno(fifo_file);
       }
@@ -620,6 +640,88 @@ int start_idle_loop(ArduiPi_OLED &display, const OledOpts &opts)
   return 0;
 }
 
+
+std::vector<std::string> split(const std::string &text,
+                               const std::string &delims)
+{
+  std::vector<std::string> tokens;
+  std::size_t start = text.find_first_not_of(delims), end = 0;
+
+  while ((end = text.find_first_of(delims, start)) != std::string::npos) {
+    tokens.push_back(text.substr(start, end - start));
+    start = text.find_first_not_of(delims, end);
+  }
+  if (start != std::string::npos)
+    tokens.push_back(text.substr(start));
+
+  return tokens;
+}
+
+Status init_display(U8G2 **pp_u8g2, string oled)
+{
+  auto settings = split(oled, ",");
+  if(settings.size() == 0) {
+    return Status::error("must specify a controller");
+  }
+  if(settings[0] == "SDL") {
+    if(settings.size() > 2)
+      return Status::error(
+          "controller SDL: extra parameters specified (use SDL,WXH)");
+    string dim_string = settings.size() == 1 ? "128X64" : settings[1];
+    auto dims = split(dim_string, "X");
+    if(dims.size() != 2)
+      return Status::error("controller SDL: dimensions is not in form WxH");
+    int width;
+    if(!read_int(dims[0].c_str(), &width))
+      return Status::error("controller SDL: width dimension is not a number");
+    int height;
+    if(!read_int(dims[1].c_str(), &height))
+      return Status::error("controller SDL: height dimension is not a number");
+
+    *pp_u8g2 = new U8G2;
+    if (u8g2_SetupBuffer_SDL((*pp_u8g2)->getU8g2(), U8G2_R0, width, height)) {
+      u8x8_InitDisplay((*pp_u8g2)->getU8x8());
+      u8x8_SetPowerSave((*pp_u8g2)->getU8x8(), 0);
+    }
+    else {
+      delete *pp_u8g2;
+      *pp_u8g2 =  nullptr;
+      return Status::error("controller SDL: SDL support was not included");
+    }
+  }
+  else {
+    if (settings.size() < 3) {
+      settings.resize(3, string("not specified"));
+      //  fprintf(stderr, "error: did find three controller parameters
+      //  CONTROLLER_TYPE,DISPLAY_NAME,COM_TYPE\n"); exit(1);
+    }
+    ControllerSetup setup;
+
+    string errmsg;
+    if (!setup.set_controller(settings[0], settings[1], settings[2], errmsg)) 
+      return Status::error(errmsg);
+
+    for (size_t i = 3; i < settings.size(); i++) {
+      errmsg = set_setup_value(setup, settings[i]);
+      if (!errmsg.empty())
+        return Status::error(errmsg);
+    }
+
+    *pp_u8g2 = new U8G2;
+    errmsg = setup.init(*pp_u8g2);
+    if (!errmsg.empty()) {
+      delete *pp_u8g2;
+      *pp_u8g2 =  nullptr;
+      return Status::error("controller type '" + settings[0] + "', name '" +
+                           settings[1] + "', protocol '" + settings[2] +
+                           "': " + errmsg);
+    }
+  }
+
+  return Status::ok();
+}
+
+
 int main(int argc, char **argv)
 {
   // Set locale to allow iconv transliteration to US-ASCII
@@ -627,15 +729,14 @@ int main(int argc, char **argv)
   OledOpts opts;
   opts.process_command_line(argc, argv);
 
-  // Set up the OLED doisplay
-  if (!init_display(display, opts.oled, opts.i2c_addr, opts.i2c_bus,
-                    opts.reset_gpio, opts.spi_dc_gpio, opts.spi_cs,
-                    opts.rotate180))
-    opts.error("could not initialise OLED");
+  // Set up the OLED display
+  opts.print_status_or_exit(init_display(&p_u8g2, opts.oled), 'o');
+
+  p_u8g2->begin();
 
   init_signals();
   atexit(cleanup);
-  int loop_ret = start_idle_loop(display, opts);
+  int loop_ret = start_idle_loop(p_u8g2, opts);
 
   if (loop_ret != 0)
     exit(EXIT_FAILURE);

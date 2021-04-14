@@ -102,17 +102,12 @@ Status read_int_list(std::vector<char *> &vals, std::vector<int> &nums,
 Status read_int_list(char *str, std::vector<int> &nums, bool is_index = false,
                      int len = 0, const char *sep = ",");
 
-/// Split a line into delimited parts
-/**\param line the line to split (this will be modified).
- * \param parts the parts of the split line.
- * \param delims the characters to use as delimiters, if \c 0 then use
- *  whitespace characters.
- * \param strict if true then treat every delimiter as a separator, returning
- *  null strings between adjacent delimiters, always returning at least
- *  one part.
- * \return The number of parts. */
-int split_line(char *line, std::vector<char *> &parts, const char *delims = 0,
-               bool strict = false);
+/// Split a string into delimited parts
+/**\param text the string to split
+ * \param delims the characters to use as delimiters
+ * \return The parts. */
+std::vector<std::string> split(const std::string &text,
+                               const std::string &delims);
 
 /// Join strings into a single string, with parts separated by a delimiter
 /**\param iterator to first string in sequence

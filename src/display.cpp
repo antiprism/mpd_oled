@@ -31,14 +31,27 @@
 using std::string;
 using std::vector;
 
-void print(ArduiPi_OLED &display, const char *str)
+namespace {
+void set_clip_on(U8G2 &u8g2, int x_start, int y_start, int x_len, int y_len)
 {
-  int sz = strlen(str);
-  for (int i = 0; i < sz; i++)
-    display.write((uint8_t)str[i]);
+  if(x_len >= 0 && y_len >= 0)
+    u8g2.setClipWindow(x_start, y_start, x_start + x_len, y_start + y_len);
 }
 
-int draw_spectrum(ArduiPi_OLED &display, int x_start, int y_start, int width,
+void set_clip_off(U8G2 &u8g2, int x_len, int y_len)
+{
+  if(x_len >= 0 && y_len >= 0)
+    u8g2.setMaxClipWindow();
+}
+
+void set_font(U8G2 &u8g2, const uint8_t *font)
+{
+  if(font)
+      u8g2.setFont(font);
+}
+} // namespace
+
+int draw_spectrum(U8G2 &u8g2, int x_start, int y_start, int width,
                   int height, const spect_graph &spect)
 {
   const int num_bars = spect.heights.size();
@@ -46,57 +59,53 @@ int draw_spectrum(ArduiPi_OLED &display, int x_start, int y_start, int width,
 
   int total_bar_pixes = width - (num_bars - 1) * gap;
   int bar_width = total_bar_pixes / num_bars;
-  int bar_height_max = height - 1;
+  int bar_height_max = height - 2;
   int graph_width = num_bars * bar_width + (num_bars - 1) * gap;
 
   if (bar_width < 1 || bar_height_max < 1) // bars too small to draw
     return -1;
 
   // Draw spectrum graph axes
-  display.drawFastHLine(x_start, height - 1 - y_start, graph_width, WHITE);
+  u8g2.setDrawColor(1);
+  u8g2.drawHLine(x_start, height - 1 - y_start, graph_width);
   for (int i = 0; i < num_bars; i++) {
     // map vals range to graph ht
     int val = bar_height_max * spect.heights[i] / 255.0 + 0.5;
     int x = x_start + i * (bar_width + gap);
     // int y = y_start+2;
+    int y_bar_start = std::max(y_start + height - val - 2, 0);
     if (val)
-      display.fillRect(x, y_start + height - val - 2, bar_width, val, WHITE);
+      u8g2.drawBox(x, y_bar_start, bar_width, val);
   }
   return 0;
 }
 
 // Draw time, according to clock_format: 0-3
-void draw_time(ArduiPi_OLED &display, int start_x, int start_y, int sz,
-               int clock_format)
+void draw_time(U8G2 &u8g2, int x_start, int y_start, int clock_format,
+    const uint8_t *font)
 {
-  display.setTextColor(WHITE);
-
   time_t t = time(0);
   struct tm *now = localtime(&t);
   const size_t STR_SZ = 32;
   char str[STR_SZ];
-  const char *fmts[] = {"%H:%M", "%k:%M", "%I:%M", "%l:%M"};
+  const char *fmts[] = { "%H:%M", "%k:%M", "%I:%M", "%l:%M" };
   if (clock_format >= 0 || clock_format < (int)sizeof(fmts))
     strftime(str, STR_SZ, fmts[clock_format], now);
   else
     str[0] = '\0';
 
-  display.setCursor(start_x, start_y);
-  display.setTextSize(sz);
-  print(display, str);
-  int W = 6; // width of a character box
-  int N = 5; // number of character
+  u8g2.setDrawColor(1);
+  set_font(u8g2, font);
+  auto len = u8g2.drawUTF8(x_start, y_start, str);
   if (clock_format > 1 && now->tm_hour >= 12)
-    display.fillRect(start_x + W * N * sz, start_y, sz, sz, WHITE);
+     u8g2.drawUTF8(x_start+len, y_start, ".");
 }
 
+
 // Draw date - DD-MM-YYYY
-void draw_date(ArduiPi_OLED &display, int start_x, int start_y, int sz,
-               int date_format)
-
+void draw_date(U8G2 &u8g2, int x_start, int y_start, int date_format,
+    const uint8_t *font)
 {
-  display.setTextColor(WHITE);
-
   time_t t = time(0);
   struct tm *now = localtime(&t);
   const size_t STR_SZ = 32;
@@ -105,158 +114,122 @@ void draw_date(ArduiPi_OLED &display, int start_x, int start_y, int sz,
     strftime(str, STR_SZ, "%m-%d-%Y", now);
   else // DD-MM-YYYY
     strftime(str, STR_SZ, "%d-%m-%Y", now);
-  display.setCursor(start_x, start_y);
-  display.setTextSize(sz);
-  print(display, str);
+
+  u8g2.setDrawColor(1);
+  set_font(u8g2, font);
+  u8g2.drawUTF8(x_start, y_start, str);
 }
 
 // Draw a connection indicator, 12x8
-void draw_connection(ArduiPi_OLED &display, int x_start, int y_start,
+void draw_connection(U8G2 &u8g2, int x_start, int y_start,
                      const connection_info &conn)
 {
-  const int char_ht = 8;
+  u8g2.setDrawColor(1);
+  const int height = 8;
   if (conn.get_type() == connection_info::TYPE_WIFI) {
     for (int i = 0; i < 4; i++) {
-      int ht = 2 * i + 1;
+      int bar_ht = 2 * i + 1;
       int x_off = 3 * i + 1;
       if (conn.get_link() > 20 * i)
-        display.fillRect(x_start + x_off, y_start + char_ht - (1 + ht), 2, ht,
-                         WHITE);
+        u8g2.drawBox(x_start+x_off, y_start + height - (bar_ht), 2, bar_ht);
       else
         break;
     }
   }
   else if (conn.get_type() == connection_info::TYPE_ETH) {
     int w = 10;
-    display.drawPixel(x_start + 3, y_start, WHITE);
-    display.drawFastHLine(x_start + 1 + 1, y_start + 1, w - 1, WHITE);
-    display.drawFastHLine(x_start + 1, y_start + 2, w, WHITE);
-    display.drawFastHLine(x_start + 1, y_start + 4, w, WHITE);
-    display.drawFastHLine(x_start + 1, y_start + 5, w - 1, WHITE);
-    display.drawPixel(x_start + 1 + w - 3, y_start + 6, WHITE);
+    u8g2.drawPixel(x_start+3, y_start);
+    u8g2.drawHLine(x_start+1+1, y_start+1, w-1);
+    u8g2.drawHLine(x_start+1, y_start+2, w);
+    u8g2.drawHLine(x_start+1, y_start+4, w);
+    u8g2.drawHLine(x_start+1, y_start+5, w-1);
+    u8g2.drawPixel(x_start+1+w-3, y_start+6);
   }
 }
 
 // Draw a slider
-void draw_slider(ArduiPi_OLED &display, int x_start, int y_start, int width,
+void draw_slider(U8G2 &u8g2, int x_start, int y_start, int width,
                  int height, float percent)
 {
+  u8g2.setDrawColor(1);
   const int in_width = (width - 2) * percent / 100.0 + 0.5;
-  display.drawRect(x_start, y_start, width, height, WHITE);
-  display.fillRect(x_start + 1, y_start + 1, in_width, height - 2, WHITE);
+  u8g2.drawFrame(x_start, y_start, width, height);
+  u8g2.drawBox(x_start + 1, y_start + 1, in_width, height - 2);
 }
 
 // Draw solid slider
-void draw_solid_slider(ArduiPi_OLED &display, int x_start, int y_start,
+void draw_solid_slider(U8G2 &u8g2, int x_start, int y_start,
                        int width, int height, float percent)
 {
+  u8g2.setDrawColor(1);
   const int bar_width = width * percent / 100.0 + 0.5;
-  display.fillRect(x_start, y_start, bar_width, height, WHITE);
+  u8g2.drawBox(x_start, y_start, bar_width, height);
 }
 
 // Draw triangle slider
-void draw_triangle_slider(ArduiPi_OLED &display, int x_start, int y_start,
+void draw_triangle_slider(U8G2 &u8g2, int x_start, int y_start,
                           int width, int height, float percent)
 {
+  u8g2.setDrawColor(1);
+  // put percent in range 0 - 100
+  percent = (percent < 0) ? 0 : (percent > 100) ? 100 : percent;
   const float frac = percent / 100;
-  display.fillTriangle(x_start, y_start + height - 1,
-                       x_start + (width - 1) * frac, y_start + height - 1,
-                       x_start + (width - 1) * frac,
-                       y_start + (height - 1) * (1 - frac), WHITE);
+  //u8g2.drawTriangle(x_start, y_start + height - 1,
+  //                     x_start + (width - 1) * frac, y_start + height - 1,
+  //                     x_start + (width - 1) * frac,
+  //                     y_start + (height - 1) * (1 - frac));
+  u8g2.drawTriangle(x_start, y_start + height, x_start + (width)*frac,
+                    y_start + height, x_start + (width)*frac,
+                    y_start + (height) * (1 - frac));
 }
 
 // Draw text
-void draw_text(ArduiPi_OLED &display, int x_start, int y_start, int max_len,
-               string str)
+void draw_text(U8G2 &u8g2, int x_start, int y_start, string str,
+               const uint8_t *font, int x_len, int y_len)
 {
-  if ((int)str.size() > max_len)
-    str.resize(max_len);
-
-  display.setTextColor(WHITE);
-  display.setCursor(x_start, y_start);
-  display.setTextSize(1);
-  print(display, str.c_str());
+  u8g2.setDrawColor(1);
+  set_font(u8g2, font);
+  set_clip_on(u8g2, x_start, y_start, x_len, y_len);
+  u8g2.drawUTF8(x_start, y_start, str.c_str());
+  set_clip_off(u8g2, x_len, y_len);
 }
+
 
 // Draw text
-void draw_text_scroll(ArduiPi_OLED &display, int x_start, int y_start,
-                      int max_len, string str, vector<double> scroll,
-                      double secs)
+void draw_text_scroll(U8G2 &u8g2, int x_start, int y_start, string str,
+                      vector<double> scroll, double secs, const uint8_t *font,
+                      int x_len, int y_len)
 {
-  if ((int)str.size() <= max_len) {
-    draw_text(display, x_start, y_start, max_len, str);
-    return;
+
+  set_font(u8g2, font);
+  int width_str = u8g2.getUTF8Width(str.c_str());
+  if (x_len >= 0 && width_str < x_len)  // no need to scroll
+    draw_text(u8g2, x_start, y_start, str);
+  else {                            // need to scroll
+    const double pixels_per_sec = scroll[0];
+    const double scroll_after_secs = scroll[1];
+
+    string spaces = "     ";
+    int width_spaces = u8g2.getUTF8Width(spaces.c_str());
+
+    str += spaces + str;
+
+    double elapsed = secs - scroll_after_secs;
+    int pix_shift = (elapsed < 0) ? 0.0
+                                  : int(elapsed * pixels_per_sec + 0.5) %
+                                        (width_str + width_spaces);
+
+    u8g2.setDrawColor(1);
+    int clip_x_start = std::max(x_start, 0);
+    int clip_y_start = std::max(y_start, 0);
+    int clip_x_len = std::min(x_start - clip_x_start + x_len,
+                              u8g2.getDisplayWidth() - clip_x_start - 1);
+    int clip_y_len = std::min(y_start - clip_y_start + y_len,
+                              u8g2.getDisplayHeight() - clip_y_start - 1);
+    set_clip_on(u8g2, clip_x_start, clip_y_start, clip_x_len, clip_y_len);
+    // fprintf(stderr, "clip (%d, %d, %d, %d)\n", clip_x_start, clip_y_start,
+    // clip_x_len, clip_y_len);
+    u8g2.drawUTF8(x_start - pix_shift, y_start, str.c_str());
+    set_clip_off(u8g2, clip_x_len, clip_y_len);
   }
-  const double pixels_per_sec = scroll[0];
-  const double scroll_after_secs = scroll[1];
-
-  int size = 1;
-  int W = 6 * size;
-  str += "     ";
-  double elapsed = secs - scroll_after_secs;
-  int pix_shift = (elapsed < 0)
-                      ? 0.0
-                      : int(elapsed * pixels_per_sec + 0.5) % (str.size() * W);
-  int pix_offset = pix_shift % W;
-  int char_pix_offset = (W - pix_offset) % W;
-  int char_shift = pix_shift / W + (char_pix_offset > 0);
-  std::rotate(str.begin(), str.begin() + char_shift, str.end());
-  // fprintf(stderr, "%c : %4d : %4d : %4d : %4d\n", str[0], pix_shift,
-  // pix_offset, char_pix_offset, char_shift);
-
-  display.setTextColor(WHITE);
-  display.setTextSize(size);
-  display.setCursor(x_start, y_start);
-  // Draw first partial character
-  if (char_pix_offset > 0)
-    display.drawCharPart(x_start, y_start, W - char_pix_offset, W,
-                         str[str.size() - 1], WHITE, BLACK, 1);
-  str.resize(max_len + 1);
-  display.setCursor(x_start + char_pix_offset, y_start);
-  // Draw intermediate characters
-  print(display, str.substr(0, max_len - 1).c_str());
-  // Draw last partial character
-  display.drawCharPart(x_start + (max_len - 1) * W + char_pix_offset, y_start,
-                       0, pix_offset ? pix_offset : W, str[max_len - 1], WHITE,
-                       BLACK, 1);
-}
-
-static void set_rotation(ArduiPi_OLED &display, bool upside_down)
-{
-  if (upside_down) {
-    display.sendCommand(0xA0);
-    display.sendCommand(0xC0);
-  }
-  else {
-    display.sendCommand(0xA1);
-    display.sendCommand(0xC8);
-  }
-}
-
-bool init_display(ArduiPi_OLED &display, int oled, unsigned char i2c_addr,
-                  int i2c_bus, int reset_gpio, int spi_dc_gpio, int spi_cs,
-                  bool rotate180)
-{
-  if (display.oled_is_spi_proto(oled)) {
-    // SPI change parameters to fit to your LCD
-    if (!display.init_spi(spi_dc_gpio, reset_gpio, spi_cs, oled))
-      return false;
-    bcm2835_spi_set_speed_hz(1e6); // ~1MHz
-  }
-  else {
-    // I2C change parameters to fit to your LCD
-    if (!display.init_i2c(reset_gpio, oled, i2c_addr, i2c_bus))
-      return false;
-  }
-
-  display.begin();
-
-  set_rotation(display, rotate180);
-  display.setTextWrap(false);
-
-  // init done
-  display.clearDisplay(); // clears the screen  buffer
-  display.display();      // display it (clear display)
-
-  return true;
 }

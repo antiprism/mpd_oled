@@ -25,54 +25,50 @@
 #ifndef DISPLAY_H
 #define DISPLAY_H
 
-#include "Adafruit_GFX.h"
-#include "ArduiPi_OLED.h"
-
 #include "display_info.h"
+
+#include <libu8g2arm/U8g2lib.h>
 
 #include <string>
 #include <vector>
 
 // Draw spectrum graph
-int draw_spectrum(ArduiPi_OLED &display, int x_start, int y_start, int width,
-                  int height, const spect_graph &spect);
+int draw_spectrum(U8G2 &u8g2, int x_start, int y_start, int width, int height,
+                  const spect_graph &spect);
 
 // Draw time HH:MM, according to what - 0: 24h leading 0, 1: 24h no leading 0
 //                                      2: 24h leading 0, 3: 24h no leading 0
-void draw_time(ArduiPi_OLED &display, int start_x, int start_y, int sz,
-               int clock_format);
+void draw_time(U8G2 &u8g2, int x_start, int y_start, int clock_format,
+               const uint8_t *font = nullptr);
 
 // Fraw date - DD-MM-YYYY
-void draw_date(ArduiPi_OLED &display, int start_x, int start_y, int sz,
-               int date_format);
+void draw_date(U8G2 &u8g2, int x_start, int y_start, int date_format,
+               const uint8_t *font = nullptr);
 
 // Draw a connection indicator, 12x8
-void draw_connection(ArduiPi_OLED &display, int x_start, int y_start,
+void draw_connection(U8G2 &u8g2, int x_start, int y_start,
                      const connection_info &conn);
 
 // Draw a slider
-void draw_slider(ArduiPi_OLED &display, int x_start, int y_start, int width,
-                 int height, float percent);
+void draw_slider(U8G2 &u8g2, int x_start, int y_start, int width, int height,
+                 float percent);
 
 // Draw solid slider
-void draw_solid_slider(ArduiPi_OLED &display, int x_start, int y_start,
-                       int width, int height, float percent);
+void draw_solid_slider(U8G2 &u8g2, int x_start, int y_start, int width,
+                       int height, float percent);
 
 // Draw triangle slider
-void draw_triangle_slider(ArduiPi_OLED &display, int x_start, int y_start,
-                          int width, int height, float percent);
+void draw_triangle_slider(U8G2 &u8g2, int x_start, int y_start, int width,
+                          int height, float percent);
 
 // Draw text
-void draw_text(ArduiPi_OLED &display, int x_start, int y_start, int max_len,
-               std::string str);
+void draw_text(U8G2 &u8g2, int x_start, int y_start, std::string str,
+               const uint8_t *font = nullptr, int x_len = -1, int y_len = -1);
 
 // Draw text and scroll in box
-void draw_text_scroll(ArduiPi_OLED &display, int x_start, int y_start,
-                      int max_len, std::string str, std::vector<double> scroll,
-                      double secs = 0.0);
-
-bool init_display(ArduiPi_OLED &display, int oled, unsigned char i2c_addr,
-                  int i2c_bus, int reset_gpio, int spi_dc_gpio, int spi_cs,
-                  bool rotate180 = false);
+void draw_text_scroll(U8G2 &u8g2, int x_start, int y_start, std::string str,
+                      std::vector<double> scroll, double secs = 0.0,
+                      const uint8_t *font = nullptr, int x_len = -1,
+                      int y_len = -1);
 
 #endif // DISPLAY_H
