@@ -106,6 +106,15 @@ Go to the Moode UI and set your timezone at **Moode / Configure / System**.
 
 ## Configure a copy of the playing audio for the spectrum display
 
+### Configure a copy on Moode 7.2 and later
+
+Starting with Moode 7.2, the Moode UI provides an option to create a
+copy of the playing audio. Go to **Configure / Audio / ALSA Options**,
+set ALSA Loopback to ON and click on SET. Now
+[Configure mpd_oled and set to run at boot](#configure-mpd_oled-and-set-to-run-at-boot).
+
+### Configure a copy on Moode 7.0 and 7.1
+
 The audio copy will be made using an ALSA configuration. To enable
 this configuration a graphic equalizer **must** be set (in the Moode UI).
 
