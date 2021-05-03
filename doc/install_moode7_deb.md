@@ -100,7 +100,7 @@ sudo reboot
 When it has rebooted, open the Moode UI and enable a graphic equaliser
 (e.g.  Graphic Eq with the 'flat' setting) if one is not already set.
 
-An audio copy should now be available to read from `hw:Loopback,1` (see below).
+An audio copy should now be available to read from `plughw:Loopback,1` (see below).
 
 Note 1: enabling the loopback device may change the card number of your
 playback device. If you hear no audio then reselect your device in the Moode UI.
@@ -137,7 +137,7 @@ An example command, for a generic I2C SH1106 display (OLED type 6) with
 a display of 10 bars and a gap of 1 pixel between bars and a framerate
 of 20Hz is
 ```
-sudo mpd_oled_service_edit -o 6 -b 10 -g 1 -f 20 -c alsa,hw:Loopback,1
+sudo mpd_oled_service_edit -o 6 -b 10 -g 1 -f 20 -c alsa,plughw:Loopback,1
 ```
 
 **For I2C OLEDs** (mpd_oled -o 3, 4 or 6) you may need to specify the I2C

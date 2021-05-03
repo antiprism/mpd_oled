@@ -189,7 +189,8 @@ void OledOpts::process_command_line(int argc, char **argv)
 
   handle_long_opts(argc, argv);
 
-  while ((c = getopt(argc, argv, ":ho:b:g:f:s:C:dP:kc:RI:a:B:r:D:S:p:")) != -1) {
+  while ((c = getopt(argc, argv, ":ho:b:g:f:s:C:dP:kc:RI:a:B:r:D:S:p:")) !=
+         -1) {
     if (common_opts(c, optopt))
       continue;
 
@@ -406,6 +407,36 @@ string print_config_file(int bars, int framerate, string cava_method,
   return templt;
 }
 
+Status start_cava(FILE **p_fifo_file, const OledOpts &opts)
+{
+
+  // Create a FIFO for cava to write its raw output to
+  const string fifo_path_cava_out = msg_str("/tmp/cava_fifo_%d", getpid());
+  unlink(fifo_path_cava_out.c_str());
+  if (mkfifo(fifo_path_cava_out.c_str(), 0666) == -1)
+    opts.error("could not create cava output FIFO for writing: " +
+               string(strerror(errno)));
+
+  // Create a temporary config file for cava
+  string config_file_name =
+      print_config_file(opts.bars, opts.framerate, opts.cava_method,
+                        opts.cava_source, fifo_path_cava_out);
+  if (config_file_name == "")
+    opts.error("could not create cava config file: " + string(strerror(errno)));
+
+  // Create a pipe to a cava subprocess
+  string cava_cmd = opts.cava_prog_name + " -p " + config_file_name;
+  if (popen(cava_cmd.c_str(), "r") == NULL)
+    opts.error("could not start cava program: " + string(strerror(errno)));
+
+  // Create a file stream to read cava's raw output from
+  *p_fifo_file = fopen(fifo_path_cava_out.c_str(), "rb");
+  if (*p_fifo_file == NULL)
+    opts.error("could not open cava output FIFO for reading");
+
+  return Status::ok();
+}
+
 // Draw fullscreen 128x64 clock/date
 void draw_clock(ArduiPi_OLED &display, const display_info &disp_info)
 {
@@ -486,14 +517,12 @@ bool get_invert(double period)
   return (period > 0) ? (fmod(time(0) / 3600.0, 2 * period) > period) : period;
 }
 
-int start_idle_loop(ArduiPi_OLED &display, FILE *fifo_file,
-                    const OledOpts &opts)
+int start_idle_loop(ArduiPi_OLED &display, const OledOpts &opts)
 {
   const double update_sec =
       1 / (0.9 * opts.framerate); // default update freq just under framerate
   const long select_usec =
       update_sec * 1100000; // slightly longer, but still less than framerate
-  int fifo_fd = fileno(fifo_file);
   Timer timer;
 
   display_info disp_info;
@@ -519,29 +548,35 @@ int start_idle_loop(ArduiPi_OLED &display, FILE *fifo_file,
     return 2;
   }
 
+  // Cava not yet started
+  int fifo_fd = -1;
+  FILE *fifo_file = nullptr;
+
   while (true) {
-    fd_set set;
-    FD_ZERO(&set);
-    FD_SET(fifo_fd, &set);
-
-    // FIFO read timeout value
-    struct timeval timeout;
-    timeout.tv_sec = 0;
-    timeout.tv_usec = select_usec; // slightly longer than timer
-
-    // If there is data read it all.
     int num_bars_read = 0;
-    if (select(FD_SETSIZE, &set, NULL, NULL, &timeout) > 0) {
-      do {
-        num_bars_read =
-            fread(&disp_info.spect.heights[0], sizeof(unsigned char),
-                  disp_info.spect.heights.size(), fifo_file);
+    if (fifo_fd >= 0) {
+      fd_set set;
+      FD_ZERO(&set);
+      FD_SET(fifo_fd, &set);
 
-        FD_ZERO(&set);
-        FD_SET(fifo_fd, &set);
-        timeout.tv_sec = 0;
-        timeout.tv_usec = 0;
-      } while (select(FD_SETSIZE, &set, NULL, NULL, &timeout) > 0);
+      // FIFO read timeout value
+      struct timeval timeout;
+      timeout.tv_sec = 0;
+      timeout.tv_usec = select_usec; // slightly longer than timer
+
+      // If there is data read it all.
+      if (select(FD_SETSIZE, &set, NULL, NULL, &timeout) > 0) {
+        do {
+          num_bars_read =
+              fread(&disp_info.spect.heights[0], sizeof(unsigned char),
+                    disp_info.spect.heights.size(), fifo_file);
+
+          FD_ZERO(&set);
+          FD_SET(fifo_fd, &set);
+          timeout.tv_sec = 0;
+          timeout.tv_usec = 0;
+        } while (select(FD_SETSIZE, &set, NULL, NULL, &timeout) > 0);
+      }
     }
 
     // Clear spectrum data if no data read or music not playing
@@ -553,16 +588,21 @@ int start_idle_loop(ArduiPi_OLED &display, FILE *fifo_file,
 
     // Update display if necessary
     if (timer.finished() || num_bars_read) {
-       display.clearDisplay();
-       pthread_mutex_lock(&disp_info_lock);
-       display.invertDisplay(get_invert(opts.invert));
-       draw_display(display, disp_info);
-       pthread_mutex_unlock(&disp_info_lock);
-       display.display();
+      display.clearDisplay();
+      pthread_mutex_lock(&disp_info_lock);
+      display.invertDisplay(get_invert(opts.invert));
+      draw_display(display, disp_info);
+      pthread_mutex_unlock(&disp_info_lock);
+      display.display();
     }
 
     if (timer.finished()) {
       display.reset_offset();
+      if (disp_info.status.get_state() == MPD_STATE_PLAY && fifo_fd < 0) {
+        opts.print_status_or_exit(start_cava(&fifo_file, opts));
+        fifo_fd = fileno(fifo_file);
+      }
+
       timer.set_timer(update_sec); // Reset the timer
     }
   }
@@ -583,33 +623,9 @@ int main(int argc, char **argv)
                     opts.rotate180))
     opts.error("could not initialise OLED");
 
-  // Create a FIFO for cava to write its raw output to
-  const string fifo_path_cava_out = msg_str("/tmp/cava_fifo_%d", getpid());
-  unlink(fifo_path_cava_out.c_str());
-  if (mkfifo(fifo_path_cava_out.c_str(), 0666) == -1)
-    opts.error("could not create cava output FIFO for writing: " +
-               string(strerror(errno)));
-
-  // Create a temporary config file for cava
-  string config_file_name =
-      print_config_file(opts.bars, opts.framerate, opts.cava_method,
-                        opts.cava_source, fifo_path_cava_out);
-  if (config_file_name == "")
-    opts.error("could not create cava config file: " + string(strerror(errno)));
-
-  // Create a pipe to a cava subprocess
-  string cava_cmd = opts.cava_prog_name + " -p " + config_file_name;
-  if (popen(cava_cmd.c_str(), "r") == NULL)
-    opts.error("could not start cava program: " + string(strerror(errno)));
-
-  // Create a file stream to read cava's raw output from
-  FILE *fifo_file = fopen(fifo_path_cava_out.c_str(), "rb");
-  if (fifo_file == NULL)
-    opts.error("could not open cava output FIFO for reading");
-
   init_signals();
   atexit(cleanup);
-  int loop_ret = start_idle_loop(display, fifo_file, opts);
+  int loop_ret = start_idle_loop(display, opts);
 
   if (loop_ret != 0)
     exit(EXIT_FAILURE);
