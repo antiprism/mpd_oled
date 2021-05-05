@@ -8,18 +8,23 @@ raudio_path="/srv/http/command/rune_shutdown"
 
 if test -f "$moodeutl_path" ; then
    sysname="moode"
+   # wait for worker to start to ensure start flag is set to 0
+   until ps -C worker.php > /dev/null; do
+      sleep 2
+   done
+   sleep 1     # extra time allow to set flag
+   until test $(moodeutl -q "select value from cfg_system where param='wrkready'") = "1"; do
+      sleep 4
+   done
+
+elif test -f "$volumio_path" ; then
+   sysname="volumio"
    until ps -C mpd > /dev/null; do
       sleep 10
    done
-elif test -f "$volumio_path" ; then
-     sysname="volumio"
-     until ps -C mpd > /dev/null; do
-        sleep 10
-     done
 elif test -f "$raudio_path" ; then
-     sysname="raudio"
-     until ps -C mpd > /dev/null; do
-        sleep 10
-     done
+   sysname="raudio"
+   until ps -C mpd > /dev/null; do
+      sleep 10
+   done
 fi
-
