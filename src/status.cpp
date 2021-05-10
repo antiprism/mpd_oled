@@ -354,6 +354,7 @@ int mpd_info::init()
     const char *MOODE_CURRENT_SONG_FILE = "/var/local/www/currentsong.txt";
     FILE *file = fopen(MOODE_CURRENT_SONG_FILE, "r");
     if (file != NULL) {
+      state = MPD_STATE_UNKNOWN; // ignore MPD state
       int line_sz = 256; // lines of interest will be shorter than this
       char line[line_sz];
 
@@ -386,17 +387,19 @@ int mpd_info::init()
       }
       fclose(file);
 
-      if (!has_title) { // assume this is a renderer
-        init_vals();
-        origin = file_name; // display the renderer as the song origin
-        state = MPD_STATE_PLAY;
-      }
-      else {
-        if (strcmp("Radio station", artist_name) == 0)
-          origin = to_ascii(album_name);
-        else
-          origin = to_ascii(artist_name);
-        title = to_ascii(title_name);
+      if(state != MPD_STATE_STOP) {
+        if (!has_title) { // assume this is a renderer
+          init_vals();
+          origin = file_name; // display the renderer as the song origin
+          state = MPD_STATE_PLAY;
+        }
+        else {
+          if (strcmp("Radio station", artist_name) == 0)
+            origin = to_ascii(album_name);
+          else
+            origin = to_ascii(artist_name);
+          title = to_ascii(title_name);
+        }
       }
 
       // If current song file state isn't set, then set to 'play'
