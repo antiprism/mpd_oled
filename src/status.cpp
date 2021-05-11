@@ -351,10 +351,10 @@ int mpd_info::init()
   // so determine and display the renderer name instead.
   // Also, use for origin and title
   if (player.is(Player::Name::moode)) {
+    state = MPD_STATE_UNKNOWN; // ignore MPD state
     const char *MOODE_CURRENT_SONG_FILE = "/var/local/www/currentsong.txt";
     FILE *file = fopen(MOODE_CURRENT_SONG_FILE, "r");
     if (file != NULL) {
-      state = MPD_STATE_UNKNOWN; // ignore MPD state
       int line_sz = 256; // lines of interest will be shorter than this
       char line[line_sz];
 
@@ -365,9 +365,9 @@ int mpd_info::init()
       char buff[line_sz];
 
       bool has_title = false;
-      bool using_current_song_file = false;
+      bool is_empty = true;
       while (fgets(line, line_sz - 1, file)) {
-        using_current_song_file = true;
+	is_empty = false;
         if (sscanf(line, "file=%[^\n]", buff) == 1)
           strcpy(file_name, buff);
         else if (sscanf(line, "artist=%[^\n]", buff) == 1)
@@ -383,9 +383,16 @@ int mpd_info::init()
         else if (sscanf(line, "state=%[^\n]", buff) == 1) {
           if (strcmp(buff, "stop") == 0)
             state = MPD_STATE_STOP;
+	  else if (strcmp(buff, "play") == 0)
+            state = MPD_STATE_PLAY;
+	  else if (strcmp(buff, "pause") == 0)
+            state = MPD_STATE_PAUSE;
         }
       }
       fclose(file);
+
+      if(is_empty)
+        state = MPD_STATE_STOP;
 
       if(state != MPD_STATE_STOP) {
         if (!has_title) { // assume this is a renderer
@@ -401,10 +408,6 @@ int mpd_info::init()
           title = to_ascii(title_name);
         }
       }
-
-      // If current song file state isn't set, then set to 'play'
-      if (using_current_song_file && state == MPD_STATE_UNKNOWN)
-        state = MPD_STATE_PLAY;
     }
   }
 

@@ -607,7 +607,9 @@ int start_idle_loop(ArduiPi_OLED &display, const OledOpts &opts)
     if (timer.finished()) {
       display.reset_offset();
       if (disp_info.status.get_state() == MPD_STATE_PLAY && fifo_fd < 0) {
+	system("cp /var/local/www/currentsong.txt /tmp/currentsong_before_sleep.txt");
         usleep(opts.cava_start_delay*1000000);
+	system("cp /var/local/www/currentsong.txt /tmp/currentsong_after_sleep.txt");
         opts.print_status_or_exit(start_cava(&fifo_file, opts));
         fifo_fd = fileno(fifo_file);
       }
