@@ -165,7 +165,6 @@ Options
   -k         cava executable name is cava (default: mpd_oled_cava)
   -c         cava input method and source (default: '%s,%s')
              e.g. 'fifo,/tmp/my_fifo', 'alsa,hw:5,0', 'pulse'
-  -Z <secs>  delay (seconds) after first play before starting cava (default: 2)
   -R         rotate display 180 degrees
   -I <val>   invert black/white: n - normal (default), i - invert,
              number - switch between n and i with this period (hours), which
