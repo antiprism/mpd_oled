@@ -1,7 +1,9 @@
 #ifndef CONTROLLER_H
 #define CONTROLLER_H
+#include <libu8g2arm/u8g2_controllers.h>
 #include <libu8g2arm/u8g2arm.h>
 #include <libu8g2arm/U8g2lib.h>
+
 
 #include <string>
 #include <vector>
