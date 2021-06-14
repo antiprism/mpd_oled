@@ -25,13 +25,14 @@
 
 #include "u8x8_d_sdl.h"
 
-#include "controller.h"
 #include "display.h"
 #include "display_info.h"
 #include "player.h"
 #include "programopts.h"
 #include "timer.h"
 #include "utils.h"
+
+#include <libu8g2arm/U8G2Controller.h>
 
 #include <errno.h>
 #include <locale.h>
@@ -134,7 +135,7 @@ public:
 void OledOpts::usage()
 {
   fprintf(stdout, R"(
-Usage: %s -o oled_type [options] [input_file]
+Usage: %s -o oled_config [options] [input_file]
 
 Display information about an MPD-based player on an OLED screen
 
@@ -142,8 +143,8 @@ Options
 %s
   -o <conf>  OLED configuration in form
                 CONTROLLER,MODEL,PROTOCOL[,opt1=val1,opt2=val2,...]
-             ('-o help' will print all supported OLEDs and their
-             configuration options)
+             '-o help' will print all supported OLEDs and their
+             configuration options
   -b <num>   number of bars to display (default: 16)
   -g <sz>    gap between bars in, pixels (default: 1)
   -f <hz>    framerate in Hz (default: 15)
@@ -363,9 +364,8 @@ CONTROLLER SETUP DETAILS
       if (!protos.empty())
         protos.pop_back();
 
-      fprintf(stderr, "  %-15s%-20s%s\n",
-              (first_model) ? kp0.first.c_str() : "", kp1.first.c_str(),
-              protos.c_str());
+      printf("  %-15s%-20s%s\n", (first_model) ? kp0.first.c_str() : "",
+             kp1.first.c_str(), protos.c_str());
       first_model = false;
     }
   }
@@ -617,10 +617,19 @@ int start_idle_loop(U8G2 *p_u8g2, const OledOpts &opts)
     // Update display if necessary
     if (timer.finished() || num_bars_read) {
       u8g2.clearBuffer();
+
+      bool inv = get_invert(opts.invert);
+      if(inv) {
+         u8g2.setDrawColor(inv);
+         // Clear with box only if inverted (but may need clear always)
+         u8g2.drawBox(0, 0, u8g2.getDisplayWidth(), u8g2.getDisplayHeight());
+      }
+      u8g2.setDrawColor(!inv);
+
       pthread_mutex_lock(&disp_info_lock);
-      // u8g2.invertDisplay(get_invert(opts.invert));
       draw_display(u8g2, disp_info);
       pthread_mutex_unlock(&disp_info_lock);
+
       u8g2.sendBuffer();
     }
 
@@ -698,18 +707,16 @@ Status init_display(U8G2 **pp_u8g2, string oled)
     ControllerSetup setup;
 
     string errmsg;
-    if (!setup.set_controller(settings[0], settings[1], settings[2], errmsg)) 
+    if (!setup.set_controller(settings[0], settings[1], settings[2], errmsg))
       return Status::error(errmsg);
 
     for (size_t i = 3; i < settings.size(); i++) {
-      errmsg = set_setup_value(setup, settings[i]);
-      if (!errmsg.empty())
+      if(!setup.set_value(settings[i], errmsg))
         return Status::error(errmsg);
     }
 
     *pp_u8g2 = new U8G2;
-    errmsg = setup.init(*pp_u8g2);
-    if (!errmsg.empty()) {
+    if(!setup.init(*pp_u8g2, errmsg)) {
       delete *pp_u8g2;
       *pp_u8g2 =  nullptr;
       return Status::error("controller type '" + settings[0] + "', name '" +

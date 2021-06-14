@@ -66,7 +66,6 @@ int draw_spectrum(U8G2 &u8g2, int x_start, int y_start, int width,
     return -1;
 
   // Draw spectrum graph axes
-  u8g2.setDrawColor(1);
   u8g2.drawHLine(x_start, height - 1 - y_start, graph_width);
   for (int i = 0; i < num_bars; i++) {
     // map vals range to graph ht
@@ -94,7 +93,6 @@ void draw_time(U8G2 &u8g2, int x_start, int y_start, int clock_format,
   else
     str[0] = '\0';
 
-  u8g2.setDrawColor(1);
   set_font(u8g2, font);
   auto len = u8g2.drawUTF8(x_start, y_start, str);
   if (clock_format > 1 && now->tm_hour >= 12)
@@ -115,7 +113,6 @@ void draw_date(U8G2 &u8g2, int x_start, int y_start, int date_format,
   else // DD-MM-YYYY
     strftime(str, STR_SZ, "%d-%m-%Y", now);
 
-  u8g2.setDrawColor(1);
   set_font(u8g2, font);
   u8g2.drawUTF8(x_start, y_start, str);
 }
@@ -124,7 +121,6 @@ void draw_date(U8G2 &u8g2, int x_start, int y_start, int date_format,
 void draw_connection(U8G2 &u8g2, int x_start, int y_start,
                      const connection_info &conn)
 {
-  u8g2.setDrawColor(1);
   const int height = 8;
   if (conn.get_type() == connection_info::TYPE_WIFI) {
     for (int i = 0; i < 4; i++) {
@@ -151,7 +147,6 @@ void draw_connection(U8G2 &u8g2, int x_start, int y_start,
 void draw_slider(U8G2 &u8g2, int x_start, int y_start, int width,
                  int height, float percent)
 {
-  u8g2.setDrawColor(1);
   const int in_width = (width - 2) * percent / 100.0 + 0.5;
   u8g2.drawFrame(x_start, y_start, width, height);
   u8g2.drawBox(x_start + 1, y_start + 1, in_width, height - 2);
@@ -161,7 +156,6 @@ void draw_slider(U8G2 &u8g2, int x_start, int y_start, int width,
 void draw_solid_slider(U8G2 &u8g2, int x_start, int y_start,
                        int width, int height, float percent)
 {
-  u8g2.setDrawColor(1);
   const int bar_width = width * percent / 100.0 + 0.5;
   u8g2.drawBox(x_start, y_start, bar_width, height);
 }
@@ -170,7 +164,6 @@ void draw_solid_slider(U8G2 &u8g2, int x_start, int y_start,
 void draw_triangle_slider(U8G2 &u8g2, int x_start, int y_start,
                           int width, int height, float percent)
 {
-  u8g2.setDrawColor(1);
   // put percent in range 0 - 100
   percent = (percent < 0) ? 0 : (percent > 100) ? 100 : percent;
   const float frac = percent / 100;
@@ -187,7 +180,6 @@ void draw_triangle_slider(U8G2 &u8g2, int x_start, int y_start,
 void draw_text(U8G2 &u8g2, int x_start, int y_start, string str,
                const uint8_t *font, int x_len, int y_len)
 {
-  u8g2.setDrawColor(1);
   set_font(u8g2, font);
   set_clip_on(u8g2, x_start, y_start, x_len, y_len);
   u8g2.drawUTF8(x_start, y_start, str.c_str());
@@ -219,7 +211,6 @@ void draw_text_scroll(U8G2 &u8g2, int x_start, int y_start, string str,
                                   : int(elapsed * pixels_per_sec + 0.5) %
                                         (width_str + width_spaces);
 
-    u8g2.setDrawColor(1);
     int clip_x_start = std::max(x_start, 0);
     int clip_y_start = std::max(y_start, 0);
     int clip_x_len = std::min(x_start - clip_x_start + x_len,

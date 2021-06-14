@@ -3,11 +3,11 @@ SUBDIRS = hjson_cpp http_tiny
 bin_PROGRAMS = mpd_oled
 
 mpd_oled_SOURCES = \
-	controller.cpp display.cpp main.cpp player.cpp programopts.cpp \
+	display.cpp main.cpp player.cpp programopts.cpp \
 	status.cpp status_msg.cpp timer.cpp ultragetopt.cpp utils.cpp \
 	u8x8_d_sdl.c \
 	\
-        controller.h display.h display_info.h \
+        display.h display_info.h \
 	iconv_wrap.h player.h programopts.h status.h \
 	status_msg.h timer.h ultragetopt.h utils.h \
 	u8x8_d_sdl.h

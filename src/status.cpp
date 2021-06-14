@@ -355,7 +355,7 @@ int mpd_info::init()
     const char *MOODE_CURRENT_SONG_FILE = "/var/local/www/currentsong.txt";
     FILE *file = fopen(MOODE_CURRENT_SONG_FILE, "r");
     if (file != NULL) {
-      int line_sz = 256; // lines of interest will be shorter than this
+      const size_t line_sz = 256; // lines of interest will be shorter than this
       char line[line_sz];
 
       char file_name[line_sz] = {0};
