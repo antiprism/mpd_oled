@@ -32,7 +32,7 @@
 #include "timer.h"
 #include "utils.h"
 
-#include <libu8g2arm/U8G2Controller.h>
+#include <libu8g2arm/U8g2Controller.h>
 
 #include <errno.h>
 #include <locale.h>

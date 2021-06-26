@@ -49,7 +49,7 @@ AC_CHECK_FUNCS([gettimeofday memset mkfifo munmap select setlocale socket strerr
 inst_msg="Install a development version of this library and rerun ./configure"
 AC_LANG_PUSH([C++])
 
-AC_ARG_VAR(LIBU8G2_DIR, ["libu8g2 source directory, built into subdirectory called output"])
+AC_ARG_VAR(LIBU8G2_DIR, ["libu8g2 source directory, built into subdirectory called build"])
 AC_MSG_CHECKING([LIBU8G2_DIR])
 tmp_dir=tmp_libu8g2
 rm -rf ${tmp_dir}
@@ -57,7 +57,7 @@ if test ! x"$LIBU8G2_DIR" = x"" ; then
   AC_MSG_RESULT([$LIBU8G2_DIR (using locally built libu8g2)])
   mkdir ${tmp_dir} ${tmp_dir}/include
   cp -a ${LIBU8G2_DIR}/src/include $tmp_dir/include/libu8g2arm
-  cp -a ${LIBU8G2_DIR}/output/src/.libs/libu8g2arm.a ${tmp_dir}
+  cp -a ${LIBU8G2_DIR}/build/src/.libs/libu8g2arm.a ${tmp_dir}
   AC_SUBST(LIBU8G2_TMP_DIR, [$tmp_dir])
 else
   AC_MSG_RESULT([no (using installed libu8g2)])
@@ -66,7 +66,7 @@ else
 fi
 AM_CONDITIONAL([LIBU8G2_LOCAL], [test ! x"$LIBU8G2_DIR" = x""])
 
-AC_ARG_VAR(LIBMPDCLIENT_DIR, ["libmpdclient source directory, built into subdirectory called output"])
+AC_ARG_VAR(LIBMPDCLIENT_DIR, ["libmpdclient source directory, built into subdirectory called build"])
 AC_MSG_CHECKING([LIBMPDCLIENT_DIR])
 tmp_dir=tmp_libmpdclient
 rm -rf ${tmp_dir}
@@ -74,8 +74,8 @@ if test ! x"$LIBMPDCLIENT_DIR" = x"" ; then
   AC_MSG_RESULT([$LIBMPDCLIENT_DIR (using locally built libmpdclient)])
   mkdir ${tmp_dir}
   cp -a ${LIBMPDCLIENT_DIR}/include $tmp_dir
-  cp -a ${LIBMPDCLIENT_DIR}/output/version.h ${tmp_dir}/include/mpd
-  cp -a ${LIBMPDCLIENT_DIR}/output/libmpdclient.a ${tmp_dir}
+  cp -a ${LIBMPDCLIENT_DIR}/build/version.h ${tmp_dir}/include/mpd
+  cp -a ${LIBMPDCLIENT_DIR}/build/libmpdclient.a ${tmp_dir}
   AC_SUBST(LIBMPDCLIENT_TMP_DIR, [$tmp_dir])
 else
   AC_MSG_RESULT([no (using installed libmpdclient)])

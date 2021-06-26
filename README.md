@@ -13,40 +13,29 @@ full list of supported OLEDs is included below
 
 ## Install
 
-A binary installation package is provided for Moode, Volumio and rAudio,
-and is the quickest and easiest way to install mpd_oled on these systems.
+A binary installation package is provided for Moode and Volumio,
+and is the quickest and easiest way to install mpd_oled on this system.
 All other systems should install from source code (Note: the build
 commands take a long time to run on a Pi Zero).
 
 ### Moode
 
 * [Install mpd_oled binary package on Moode 7](doc/install_moode7_deb.md)
-* [Install mpd_oled binary package on Moode 6](doc/install_moode6_deb.md)
 * [Install mpd_oled from source on Moode 7](doc/install_moode7_source.md)
-* [Install mpd_oled from source on Moode 6](doc/install_moode6_source.md)
 
 ### Volumio
 
 * [Install mpd_oled binary package on Volumio 2](doc/install_volumio2_deb.md)
 * [Install mpd_oled from source on Volumio 2](doc/install_volumio2_source.md)
 
-Another alternative is
-[Mase's mpd_oled plugin for Volumio](https://github.com/supercrab/volumio-plugins/tree/master/plugins/miscellanea/mpd_oled)
-(external project). The plugin installs mpd_oled and allows
-it to be configured through the Volumio UI.
-
 ### rAudio
 
 * [Install mpd_oled from source on rAudio 1](doc/install_raudio1.md)
 
-A binary package is provided for the Pi Zero only
-
-* [Install mpd_oled binary package for Pi Zero on rAudio 1](doc/install_raudio1_zst.md)
-
 ### Other OS
 
 * Debian-based OS running MPD: follow the instructions to
-  [Install mpd_oled from source on Volumio 2](doc/install_volumio2_source.md)
+  [Install mpd_oled from source on Moode 7](doc/install_moode7_source.md)
   but configure a copy of the audio by editing /etc/mpd.conf directly and
   appending the contents of `/usr/local/share/mp_oled/mpd_oled_fifo.conf`.
 * Arch-based OS running MPD: follow the instructions to
@@ -316,7 +305,7 @@ PROTOCOL OPTIONS
       required: clock,data
       optional: rotation,reset,i2c_address
     4W_HW_SPI - 4 wire hardware SPI
-      required: cs,dc
+      required: dc
       optional: rotation,reset,bus_number,cs_number
     4W_SW_SPI - 4 wire software SPI
       required: clock,data,cs,dc
