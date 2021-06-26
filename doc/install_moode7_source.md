@@ -41,6 +41,7 @@ cd cava
 ./configure --disable-input-portaudio --disable-input-sndio --disable-output-ncurses --disable-input-pulse --program-prefix=mpd_oled_
 make
 sudo make install-strip
+cd ..    # leave cava directory
 ```
 
 ## Build and install mpd_oled
@@ -48,19 +49,18 @@ sudo make install-strip
 Download and build libu8g2arm (running `make` might take two hours on a
 Pi Zero)
 ```
-git clone https://github.com/antiprism/libu8g2arm.git
+git clone https://github.com/antiprism/libu8g2arm
 cd libu8g2arm
 ./bootstrap
 mkdir build
 cd build
 CPPFLAGS="-W -Wall -Wno-psabi" ../configure --prefix=/usr/local
 make
-
+cd ../..  # leave libu8g2arm/build directory
 ```
 
 Download, build and install mpd_oled.
 ```
-cd ..   # if you are still in the cava source directory
 git clone https://github.com/antiprism/mpd_oled
 cd mpd_oled
 ./bootstrap

@@ -15,8 +15,6 @@ docdoc_DATA = \
 	doc/FAQ.md \
 	doc/install_moode7_deb.md \
 	doc/install_moode7_source.md \
-	doc/install_moode6_deb.md \
-	doc/install_moode6_source.md \
 	doc/install_volumio2_deb.md \
 	doc/install_volumio2_source.md \
 	doc/install_raudio1_zst.md \
