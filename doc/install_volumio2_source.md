@@ -19,7 +19,7 @@ available for entering the commands below (e.g.
 Install all the packages needed to build and run cava and mpd_oled
 ```
 sudo apt update
-sudo apt install build-essential git-core autoconf make libtool libfftw3-dev libiniparser-dev libmpdclient-dev libi2c-dev i2c-tools lm-sensors
+sudo apt install build-essential git-core autoconf make libtool libfftw3-dev libmpdclient-dev libi2c-dev i2c-tools lm-sensors
 ```
 
 ## Build and install cava
@@ -37,6 +37,7 @@ feature-set executable called `mpd_oled_cava`.
 ```
 git clone https://github.com/karlstav/cava
 cd cava
+git checkout -b cava_with_iniparser 03a8c85c
 ./autogen.sh
 ./configure --disable-input-portaudio --disable-input-sndio --disable-output-ncurses --disable-input-pulse --program-prefix=mpd_oled_
 make
