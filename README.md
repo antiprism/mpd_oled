@@ -23,8 +23,8 @@ commands take a long time to run on a Pi Zero).
 
 ### Volumio
 
-* [Install mpd_oled binary package on Volumio 2](doc/install_volumio2_deb.md)
-* [Install mpd_oled from source on Volumio 2](doc/install_volumio2_source.md)
+* [Install mpd_oled binary package on Volumio 3](doc/install_volumio3_deb.md)
+* [Install mpd_oled from source on Volumio 3](doc/install_volumio3_source.md)
 
 Another alternative is
 [Mase's mpd_oled plugin for Volumio](https://github.com/supercrab/volumio-plugins/tree/master/plugins/miscellanea/mpd_oled)
@@ -42,7 +42,7 @@ A binary package is provided for the Pi Zero only
 ### Other OS
 
 * Debian-based OS running MPD: follow the instructions to
-  [Install mpd_oled from source on Volumio 2](doc/install_volumio2_source.md)
+  [Install mpd_oled from source on Volumio 3](doc/install_volumio3_source.md)
   but configure a copy of the audio by editing /etc/mpd.conf directly and
   appending the contents of `/usr/local/share/mp_oled/mpd_oled_fifo.conf`.
 * Arch-based OS running MPD: follow the instructions to

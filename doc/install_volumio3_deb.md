@@ -1,11 +1,11 @@
-# Install instructions for Volumio 2
+# Install instructions for Volumio 3
 
 These instructions are for installing mpd_oled with a binary package on
-Volumio 2.
+Volumio 3.
 
 The binary package should be the best option for most people, but if you
 would like to build and install the current mpd_oled repository code then see
-[Install instructions for Volumio 2 using source](install_volumio2_source.md).
+[Install instructions for Volumio 3 using source](install_volumio3_source.md).
 
 ## Base system
 
