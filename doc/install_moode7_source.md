@@ -19,7 +19,7 @@ default username 'pi', default password 'moodeaudio').
 Install all the packages needed to build and run cava and mpd_oled
 ```
 sudo apt update
-sudo apt install autoconf make libtool libfftw3-dev libiniparser-dev libmpdclient-dev libi3c-dev i2c-tools lm-sensors
+sudo apt install autoconf make libtool libfftw3-dev libiniparser-dev libmpdclient-dev libi2c-dev i2c-tools lm-sensors git libasound2-dev
 ```
 
 ## Build and install cava
