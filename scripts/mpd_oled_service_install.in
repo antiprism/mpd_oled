@@ -10,6 +10,7 @@ Description=MPD OLED Display
 [Service]
 ExecStartPre=@prefix@/bin/$launch_test
 ExecStart=@prefix@/bin/$service -o 0 -b 21 -g 1 -f 15
+TimeoutSec=3min
 
 [Install]
 WantedBy=multi-user.target
