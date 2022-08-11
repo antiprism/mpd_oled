@@ -106,7 +106,6 @@ public:
   string cava_prog_name = "mpd_oled_cava"; // cava executable name
   string cava_method = "fifo";             // fifo, alsa or pulse
   string cava_source;                      // Path to FIFO / alsa device
-  double cava_start_delay = 2;   // delay (secs) after play before starting cava
   double invert = 0;             // 0 normal, -1 invert, n>0 invert every n hrs
   bool rotate180 = false;        // display upside down
   unsigned char i2c_addr = 0;    // number of I2C address
@@ -190,7 +189,7 @@ void OledOpts::process_command_line(int argc, char **argv)
 
   handle_long_opts(argc, argv);
 
-  while ((c = getopt(argc, argv, ":ho:b:g:f:s:C:dP:kc:Z:RI:a:B:r:D:S:p:")) !=
+  while ((c = getopt(argc, argv, ":ho:b:g:f:s:C:dP:kc:RI:a:B:r:D:S:p:")) !=
          -1) {
     if (common_opts(c, optopt))
       continue;
@@ -292,12 +291,6 @@ void OledOpts::process_command_line(int argc, char **argv)
               c);
 
       cava_source = &optarg[method_len];
-      break;
-
-    case 'Z':
-      print_status_or_exit(read_double(optarg, &cava_start_delay), c);
-      if (cava_start_delay < 0)
-        error("cava start delay cannot be negative", c);
       break;
 
     case 'R':
@@ -606,9 +599,9 @@ int start_idle_loop(ArduiPi_OLED &display, const OledOpts &opts)
     if (timer.finished()) {
       display.reset_offset();
       if (disp_info.status.get_state() == MPD_STATE_PLAY && fifo_fd < 0) {
-	system("cp /var/local/www/currentsong.txt /tmp/currentsong_before_sleep.txt");
-        usleep(opts.cava_start_delay*1000000);
-	system("cp /var/local/www/currentsong.txt /tmp/currentsong_after_sleep.txt");
+	// delay cava start by 2 seconds (for Moode)
+	// https://github.com/antiprism/mpd_oled/issues/67
+        usleep(2 * 1000000);
         opts.print_status_or_exit(start_cava(&fifo_file, opts));
         fifo_fd = fileno(fifo_file);
       }
