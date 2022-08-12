@@ -9,15 +9,17 @@ SSD1309, SH1106 or SSH1106 controller.
 
 ## Install
 
-A binary installation package is provided for Moode, Volumio and rAudio,
+A binary installation package is provided for Moode and Volumio,
 and is the quickest and easiest way to install mpd_oled on these systems.
 All other systems should install from source code (Note: the build
 commands take a long time to run on a Pi Zero).
 
 ### Moode
 
+* [Install mpd_oled binary package on Moode 8](doc/install_moode8_deb.md)
 * [Install mpd_oled binary package on Moode 7](doc/install_moode7_deb.md)
 * [Install mpd_oled binary package on Moode 6](doc/install_moode6_deb.md)
+* [Install mpd_oled from source on Moode 8](doc/install_moode8_source.md)
 * [Install mpd_oled from source on Moode 7](doc/install_moode7_source.md)
 * [Install mpd_oled from source on Moode 6](doc/install_moode6_source.md)
 
@@ -34,10 +36,6 @@ it to be configured through the Volumio UI.
 ### rAudio
 
 * [Install mpd_oled from source on rAudio 1](doc/install_raudio1.md)
-
-A binary package is provided for the Pi Zero only
-
-* [Install mpd_oled binary package for Pi Zero on rAudio 1](doc/install_raudio1_zst.md)
 
 ### Other OS
 

@@ -19,7 +19,7 @@ available for entering the commands below (e.g.
 Install all the packages needed to build and run cava and mpd_oled
 ```
 sudo apt update
-sudo apt install build-essential autoconf make libtool xxd libfftw3-dev libiniparser-dev libmpdclient-dev libi2c-dev lm-sensors
+sudo apt install build-essential autoconf make libtool libfftw3-dev libiniparser-dev libmpdclient-dev libi2c-dev lm-sensors libasound2-dev
 ```
 
 ## Build and install cava
