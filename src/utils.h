@@ -140,4 +140,13 @@ char *clear_extra_whitespace(char *str);
  * \return The converted string. */
 std::string msg_str(const char *fmt, ...);
 
+/// Extract a substring between two delimiters
+/** Extracts a substring between a start delimiter and the first occurrence of
+ * the end delimiter encountered after the first delimiter \param s the string
+ * to extract from \param start_delim the start delimiter \param end_delim the
+ * end delimiter \return Text between the two delimiter strings. */
+std::string get_str_between_two_str(const std::string &s,
+                                    const std::string &start_delim,
+                                    const std::string &end_delim);
+
 #endif // UTILS_H

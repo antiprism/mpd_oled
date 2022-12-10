@@ -35,7 +35,7 @@
 using std::string;
 
 std::vector<std::string> Player::name_strs = {"mpd", "moode", "volumio",
-                                              "runeaudio", "unknown"};
+                                              "runeaudio","plexamp", "unknown"};
 
 namespace {
 bool file_exists(const std::string &name)
@@ -54,6 +54,8 @@ void Player::init_detect()
     name = Player::Name::volumio;
   else if (file_exists("/srv/http/command/rune_shutdown"))
     name = Player::Name::runeaudio;
+  else if (file_exists("/home/claudio/plexamp/js/index.js"))
+    name = Player::Name::plexamp;
   else if (system("which mpd > /dev/null 2>&1") == 0) // check for mpd
     name = Player::Name::mpd;
   else

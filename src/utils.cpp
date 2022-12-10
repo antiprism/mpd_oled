@@ -206,3 +206,13 @@ string msg_str(const char *fmt, ...)
   vsnprintf(message, MSG_SZ - 1, fmt, args);
   return message;
 }
+
+string get_str_between_two_str(const string &s, const string &start_delim,
+                               const string &end_delim)
+{
+  unsigned first_delim_pos = s.find(start_delim);
+  unsigned end_pos_of_first_delim = first_delim_pos + start_delim.length() + 1;
+  unsigned last_delim_pos = s.find_first_of(end_delim, end_pos_of_first_delim);
+  return s.substr(end_pos_of_first_delim,
+                  last_delim_pos - end_pos_of_first_delim);
+}

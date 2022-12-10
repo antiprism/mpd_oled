@@ -173,7 +173,7 @@ Options
   -r <gpio>  I2C/SPI reset GPIO number, if needed (default: 25)
   -D <gpio>  SPI DC GPIO number (default: 24)
   -S <num>   SPI CS number (default: 0)
-  -p <plyr>  Player: mpd, moode, volumio, runeaudio (default: detected)
+  -p <plyr>  Player: mpd, moode, volumio, runeaudio, plexamp (default: detected)
 Example :
 %s -o 6 use a %s OLED
 )",
@@ -346,7 +346,7 @@ void OledOpts::process_command_line(int argc, char **argv)
       break;
 
     case 'p': {
-      // const char *params = "mpd|moode|volumio|runeaudio\n";
+      // const char *params = "mpd|moode|volumio|runeaudio|plexamp\n";
       string params = Player::all_names("|");
       string arg_id;
       if (!get_arg_id(optarg, &arg_id, params.c_str()))

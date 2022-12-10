@@ -145,6 +145,15 @@ bool connection_info::init()
   return (type != TYPE_UNKNOWN);
 }
 
+/// Get Plexamp status file as string
+string get_plexamp_status()
+{
+  char url[] = "http://localhost:32500/player/timeline/"
+               "poll?commandID=1&includeMetadata=1&wait=0";
+  HttpRequest req;
+  return (req.set_url(url) == 0) ? req.get() : string();
+}
+
 /// Get Volumio status file as string
 string get_volumio_status()
 {
@@ -407,6 +416,59 @@ int mpd_info::init()
             origin = to_ascii(artist_name);
           title = to_ascii(title_name);
         }
+      }
+    }
+  }
+
+  // On Plexamp, rather than MPD an alternative renderer is playing audio.
+  // If this is the case, detailed song information will be fetched from player
+  // xml response.
+  if (player.is(Player::Name::plexamp)) {
+
+    string artist_name;
+    string title_name;
+
+    state = MPD_STATE_UNKNOWN; // ignore MPD state
+    const string PLEXAMP_CURRENT_STATUS = get_plexamp_status();
+
+    if (!PLEXAMP_CURRENT_STATUS.empty()) {
+
+      string start = "state=";
+      string end = "\"";
+      string buff = get_str_between_two_str(PLEXAMP_CURRENT_STATUS, start, end);
+
+      if (buff.compare("paused") == 0)
+        state = MPD_STATE_STOP;
+      else if (buff.compare("playing") == 0)
+        state = MPD_STATE_PLAY;
+
+      start = "title=";
+      buff = get_str_between_two_str(PLEXAMP_CURRENT_STATUS, start, end);
+      title_name = to_ascii(buff);
+
+      start = "grandparentTitle=";
+      buff = get_str_between_two_str(PLEXAMP_CURRENT_STATUS, start, end);
+      artist_name = to_ascii(buff);
+
+      start = "duration=";
+      buff = get_str_between_two_str(PLEXAMP_CURRENT_STATUS, start, end);
+      song_total_secs = std::atoi(buff.c_str()) / 1000;
+
+      start = "time=";
+      buff = get_str_between_two_str(PLEXAMP_CURRENT_STATUS, start, end);
+      song_elapsed_secs = std::atoi(buff.c_str()) / 1000;
+
+      start = "bitrate=";
+      buff = get_str_between_two_str(PLEXAMP_CURRENT_STATUS, start, end);
+      kbitrate = std::atoi(buff.c_str());
+
+      start = "volume=";
+      buff = get_str_between_two_str(PLEXAMP_CURRENT_STATUS, start, end);
+      volume = std::atoi(buff.c_str());
+
+      if (state != MPD_STATE_STOP) {
+        title = title_name;
+        origin = artist_name;
       }
     }
   }
