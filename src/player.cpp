@@ -48,13 +48,15 @@ bool file_exists(const std::string &name)
 void Player::init_detect()
 {
   // Check for files associated with a player OS
+  string home( getenv( "HOME" ) );
+  
   if (file_exists("/var/www/command/moode.php"))
     name = Player::Name::moode;
   else if (file_exists("/volumio"))
     name = Player::Name::volumio;
   else if (file_exists("/srv/http/command/rune_shutdown"))
     name = Player::Name::runeaudio;
-  else if (file_exists("/home/claudio/plexamp/js/index.js"))
+  else if (file_exists(home + "/plexamp/js/index.js"))
     name = Player::Name::plexamp;
   else if (system("which mpd > /dev/null 2>&1") == 0) // check for mpd
     name = Player::Name::mpd;
