@@ -28,3 +28,8 @@ elif test -f "$raudio_path" ; then
       sleep 10
    done
 fi
+
+# HOME may not be set and cava may require it to be set
+[[ -n "$HOME" ]] || export HOME=/tmp
+
+exec "$@"

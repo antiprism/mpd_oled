@@ -7,19 +7,19 @@ echo
 
 found_usr="no";
 if test -f "/usr/bin/mpd_oled"; then
-  echo "FOUND: mpd_oled found in /usr/bin"
+  echo "note: mpd_oled found in /usr/bin"
   found_usr="yes"
 fi
 
 found="no";
 if test -f "/usr/local/bin/mpd_oled"; then
-  echo "FOUND: mpd_oled found in /usr/local/bin"
+  echo "note: mpd_oled found in /usr/local/bin"
   found="yes"
 fi
 
 sysd_file="/etc/systemd/system/mpd_oled.service"
 if test -f "$sysd_file" && grep -q "/usr/local/" "$sysd_file"; then
-  echo "FOUND: mpd_oled service file includes /usr/local"
+  echo "note: mpd_oled service file includes /usr/local"
   found="yes"
 fi
 
