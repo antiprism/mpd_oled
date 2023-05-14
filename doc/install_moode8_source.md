@@ -97,7 +97,10 @@ Restart the Pi after making any system configuration changes.
 In the Moode UI, set your timezone at **Moode / Configure / System**.
 
 Enable the Moode metadata file, which includes information about the current
-song, at **Moode / Configure / System / Local Services / Metadata file**.
+song. The setting will either be at
+**Moode / Configure / System / Local Services / Metadata file**
+or
+**Moode / Configure / Audio / MPD Options / Metadata file**.
 
 ## Configure a copy of the playing audio for the spectrum display
 
