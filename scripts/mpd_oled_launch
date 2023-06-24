@@ -30,6 +30,7 @@ elif test -f "$raudio_path" ; then
 fi
 
 # HOME may not be set and cava may require it to be set
+# (latest cava now works without a home directory)
 [[ -n "$HOME" ]] || export HOME=/tmp
 
 exec "$@"
