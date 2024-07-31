@@ -1,9 +1,9 @@
 # Moode, Volumio, RuneAudio and MPD OLED Spectrum Display for Raspberry Pi
 
 **Please note that mpd_oled is no longer being developed. Check for**
-**[issues](issues) before using (in particular, SPI screens**
-**are not supported on the Pi 5). Critical bugs will still be reviewed,**
-**in case an easy fix is possible.**
+**[issues](https://github.com/antiprism/mpd_oled/issues) before using**
+**(in particular, SPI screens are not supported on the Pi 5). Critical**
+**issues will still be reviewed, in case an easy fix is possible.**
 
 The mpd_oled program displays an information screen including a music
 frequency spectrum on an OLED screen connected to a Raspberry Pi (or similar)
