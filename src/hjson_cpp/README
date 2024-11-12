@@ -1,5 +1,5 @@
 Hjson-cpp
-Hjson for C++ http://hjson.org
+Hjson for C++ https://hjson.github.io/
 Downloaded from: https://github.com/hjson/hjson-cpp
 Include source files from src.
 Modfied to build without warnings
